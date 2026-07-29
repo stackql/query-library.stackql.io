@@ -1,39 +1,76 @@
 {
-  "build_id": "ql-1075f62d28974fd8",
+  "build_id": "ql-12708c8552907f46",
   "entries": [
     {
-      "id": "aws/cloud_control/log-group-retention-update",
-      "title": "Set CloudWatch log group retention",
-      "description": "Updates RetentionInDays on a log group via Cloud Control JSON Patch semantics.",
+      "id": "aws/cloud_control/resource-request-by-token",
+      "title": "Cloud Control resource request by token",
+      "description": "Gets the progress event for one Cloud Control resource request by its request token; poll it until the operation completes.",
       "providers": [
-        "aws"
+        "awscc"
       ],
       "services": [
-        "cloud_control",
-        "logs"
+        "cloud_control"
       ],
       "tags": [
         "aws",
-        "logs",
         "cloud_control",
-        "mutation"
+        "operations",
+        "async"
       ],
       "keywords": [
-        "log retention",
-        "patch document",
-        "cloud control update"
+        "request token",
+        "progress event",
+        "poll request",
+        "async status"
       ],
       "intent_keywords": [
-        "set log group retention",
-        "change cloudwatch retention days"
+        "check cloud control request status",
+        "poll an aws request token",
+        "is my cloud control update finished"
       ],
-      "mutation": true,
-      "verb": "mutation",
+      "mutation": false,
+      "verb": "select",
+      "status": "draft",
+      "required_params": [
+        "region",
+        "request_token"
+      ]
+    },
+    {
+      "id": "aws/cloud_control/resource-requests-by-status",
+      "title": "Cloud Control resource requests by status",
+      "description": "Lists recent Cloud Control resource requests in a region filtered by operation and status; the follow-up surface for asynchronous AWS mutations.",
+      "providers": [
+        "awscc"
+      ],
+      "services": [
+        "cloud_control"
+      ],
+      "tags": [
+        "aws",
+        "cloud_control",
+        "operations",
+        "async",
+        "inventory"
+      ],
+      "keywords": [
+        "resource request status",
+        "async mutation",
+        "progress event",
+        "failed requests"
+      ],
+      "intent_keywords": [
+        "list failed cloud control requests",
+        "check status of my aws mutations",
+        "what cloud control operations are in progress"
+      ],
+      "mutation": false,
+      "verb": "select",
       "status": "stable",
       "required_params": [
         "region",
-        "log_group_name",
-        "retention_days"
+        "operation",
+        "operation_status"
       ]
     },
     {
@@ -201,6 +238,42 @@
       ]
     },
     {
+      "id": "aws/logs/log-group-retention-update",
+      "title": "Set CloudWatch log group retention",
+      "description": "Updates RetentionInDays on a CloudWatch log group via an asynchronous Cloud Control update.",
+      "providers": [
+        "awscc"
+      ],
+      "services": [
+        "logs"
+      ],
+      "tags": [
+        "aws",
+        "logs",
+        "cloudwatch",
+        "retention",
+        "mutation"
+      ],
+      "keywords": [
+        "log retention",
+        "retention policy",
+        "cloud control update"
+      ],
+      "intent_keywords": [
+        "set log group retention",
+        "change cloudwatch retention days",
+        "update log group retention policy"
+      ],
+      "mutation": true,
+      "verb": "mutation",
+      "status": "draft",
+      "required_params": [
+        "region",
+        "log_group_name",
+        "retention_days"
+      ]
+    },
+    {
       "id": "aws/s3/bucket-detail",
       "title": "S3 bucket security detail",
       "description": "Full security attributes for one bucket: public access block, encryption, versioning, ownership.",
@@ -265,6 +338,44 @@
       "status": "stable",
       "required_params": [
         "region"
+      ]
+    },
+    {
+      "id": "aws/tagging/resources-by-tag",
+      "title": "Find AWS resource identifiers by tag",
+      "description": "Resolves identifiers for ID-centric AWS resource types by querying the tagging API with a resource type and tag filter; returns ARNs, extracted ids and tags.",
+      "providers": [
+        "awscc"
+      ],
+      "services": [
+        "tagging"
+      ],
+      "tags": [
+        "aws",
+        "tagging",
+        "identifiers",
+        "inventory"
+      ],
+      "keywords": [
+        "tagged resources",
+        "resource arn",
+        "tag filters",
+        "id centric",
+        "find by tag"
+      ],
+      "intent_keywords": [
+        "find aws resources by tag",
+        "get vpc id from tags",
+        "look up resource ids by tag"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "region",
+        "resource_type",
+        "tag_key",
+        "tag_value"
       ]
     },
     {
@@ -394,7 +505,7 @@
       "required_params": []
     },
     {
-      "id": "databricks_account/provisioning/workspaces-list",
+      "id": "databricks/provisioning/workspaces-list",
       "title": "Databricks workspaces in an account",
       "description": "Lists all Databricks workspaces in an account with cloud, region and provisioning status.",
       "providers": [

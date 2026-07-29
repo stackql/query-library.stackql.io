@@ -1,10 +1,14 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import catalogue from '@site/static/docs/query-library/index.json';
 import providersSummary from '@site/static/docs/query-library/providers.json';
 import styles from './styles.module.css';
 
 function ProviderCard({provider}) {
+  // providers.json emits site-root-relative logo paths; resolve them under
+  // baseUrl so this origin serves its own copies from static/img/providers/.
+  const logoUrl = useBaseUrl(provider.logo || '');
   return (
     <article className="col col--4 margin-bottom--lg">
       <Link
@@ -13,7 +17,7 @@ function ProviderCard({provider}) {
       >
         <div className={styles.providerCardHeader}>
           {provider.logo ? (
-            <img src={provider.logo} alt={`${provider.title} logo`} className={styles.providerLogo} />
+            <img src={logoUrl} alt={`${provider.title} logo`} className={styles.providerLogo} />
           ) : (
             <div className={styles.providerLogoFallback} aria-hidden="true">
               {provider.title.charAt(0)}
@@ -66,11 +70,11 @@ export default function LandingContent() {
       </p>
       <p>
         Entries are mastered in the{' '}
-        <a href="https://github.com/stackql/stackql.io/tree/main/query-library">
-          stackql.io repository
+        <a href="https://github.com/stackql/query-library.stackql.io/tree/main/query-library">
+          query-library.stackql.io repository
         </a>{' '}
         and verified nightly against live providers - see the{' '}
-        <a href="https://github.com/stackql/stackql.io/blob/main/query-library/CONTRIBUTING.md">
+        <a href="https://github.com/stackql/query-library.stackql.io/blob/main/CONTRIBUTING.md">
           contributing guide
         </a>{' '}
         to add one.

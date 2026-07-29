@@ -1,7 +1,6 @@
 ---
 title: Enabled AWS regions
 description: Lists AWS regions with their opt-in status; exclude not-opted-in regions from sweeps.
-format: md
 verb: select
 status: stable
 providers: [aws]

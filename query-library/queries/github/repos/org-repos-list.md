@@ -1,7 +1,6 @@
 ---
 title: GitHub repositories in an organization
 description: Lists all repositories in a GitHub organization with visibility, archive state and activity signals.
-format: md
 verb: select
 status: stable
 providers: [github]
@@ -45,6 +44,8 @@ cost:
   fan_out: none
   expensive: false
 last_verified: "2026-07-26"
+author: Jeffrey Aven
+author_company: StackQL Studios
 ---
 
 Lists every repository in a GitHub organization with the fields that answer

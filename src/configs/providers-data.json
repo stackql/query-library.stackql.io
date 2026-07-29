@@ -4,6 +4,7 @@
   {"name": "google", "description": "Cloud computing services offered by Google.", "title": "Google"},
   {"name": "github", "description": "Web-based version-control and collaboration.", "title": "GitHub"},
   {"name": "snowflake", "description": "Cloud data platform for data warehousing and analytics.", "title": "Snowflake"},
+  {"name": "databricks", "description": "Data lakehouse platform for analytics, data engineering and AI.", "title": "Databricks"},
   {"name": "databricks_workspace", "description": "Workspace resources and ML operations for Databricks.", "title": "Databricks Workspace"},
   {"name": "databricks_account", "description": "Account management and provisioning for Databricks.", "title": "Databricks Account"},
   {"name": "openai", "description": "AI models and services by OpenAI.", "title": "OpenAI"},

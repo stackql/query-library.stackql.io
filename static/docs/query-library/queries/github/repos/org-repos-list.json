@@ -68,5 +68,7 @@
   "template": "SELECT name, full_name, visibility, archived, default_branch, pushed_at, stargazers_count FROM github.repos.repos WHERE org = '{{org}}';",
   "notes": "Unauthenticated calls see only public repositories and are heavily rate-limited; authenticate to see private and internal repositories the token can access. Results are paginated transparently by StackQL.",
   "doc_url": "https://stackql.io/docs/query-library/queries/github/repos/org-repos-list",
-  "last_verified": "2026-07-26"
+  "last_verified": "2026-07-26",
+  "author": "Jeffrey Aven",
+  "author_company": "StackQL Studios"
 }

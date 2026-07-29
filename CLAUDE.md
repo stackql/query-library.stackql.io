@@ -1,138 +1,89 @@
-# CLAUDE.md - stackql.io
+# CLAUDE.md - query-library.stackql.io
 
-Project guide for Claude Code working in this repository. Tells you what this site is, how the AEO platform is wired together, where the dependencies live, and the conventions to follow.
+Project guide for Claude Code working in this repository.
 
-## What this site is
+## What this repo is
 
-stackql.io is the marketing and documentation site for StackQL, built on Docusaurus 3.10. Three audiences:
+The StackQL query library and the minimal Docusaurus 3 site that publishes it.
+The repo has one purpose: to master and serve ground truth StackQL queries -
+to the stackql MCP server's tool surface (`query_library_search` /
+`query_library_get`, via CDN with raw GitHub as fallback) and to humans via
+the microsite. Entries are treated as authoritative by agents, so correctness
+outranks coverage. It was carved out of the main stackql.io repo; everything
+here exists to serve one content surface:
+`https://stackql.io/docs/query-library/*`.
 
-- **Humans** - default site nav, docs at `/docs/*`, blog at `/blog/*`, install/provider/tutorial landings at top-level React pages.
-- **AI agents and answer engines** - a parallel content surface at `/ai/*` (canonical definitions, comparisons, how-tos, FAQs, troubleshooting, etc.) reachable by deep link or via `llms.txt`, but **not** linked from the human nav.
-- **LLM crawlers** - `llms.txt` and `llms-full.txt` at site root; raw markdown twin (`/foo.md`) for every doc and blog page.
+The repo deploys as its own Netlify site (origin `query-library.stackql.io`)
+but is **served through the main site's proxy rewrite**. The stackql.io repo's
+netlify.toml contains:
 
-The two surfaces serve the same URLs to all visitors (no UA-based cloaking). The `/ai/*` pages just don't appear in the human-facing nav.
-
-## Tech stack snapshot
-
-- Docusaurus 3.10.1, classic preset
-- React 18 (pinned - several deps require it)
-- MUI 5/6 (already in deps - Material UI and emotion)
-- Node 22 toolchain, yarn is the package manager (yarn.lock is the only lockfile - package-lock.json is gitignored)
-- Deployed via Netlify, build = `npm run build`, publish = `build/`
-- Search via Algolia DocSearch (`ALGOLIA_APP_ID`, `ALGOLIA_API_KEY`, `ALGOLIA_INDEX_NAME` env vars required for prod builds)
-
-## AEO architecture
-
-Two custom plugins published to npm and one secondary content-docs instance handle the AEO pipeline. Both plugins are in sibling repos and developed alongside this site.
-
-### Plugin 1: `@stackql/docusaurus-plugin-structured-data`
-
-Source: `../docusaurus-plugin-structured-data/` (sibling to this repo)
-Published: npm registry, current version pinned in [package.json](package.json)
-Lifecycle: `postBuild` + `allContentLoaded`
-
-Emits JSON-LD `<script type="application/ld+json">` blocks into the `<head>` of every emitted HTML page. The shape:
-
-- `WebPage` + `BreadcrumbList` + `WebSite` + `Organization` on every page
-- `Article` + `ImageObject` + `Person` on `/blog/*` (real blog posts)
-- `TechArticle` on `/docs/*` and `/ai/*` (configured via `techArticleRoutePrefixes`)
-- `FAQPage`, `HowTo`, `SoftwareApplication` opt-in via frontmatter (`faq:`, `howTo:`, `softwareApplication:`)
-- `SpeakableSpecification` on every WebPage with default selectors
-- Connected `@graph` via `mainEntity` linking (TechArticle.mainEntity -> FAQPage when both present)
-
-Config lives at `themeConfig.structuredData` in [docusaurus.config.js](docusaurus.config.js). Key settings:
-
-- `techArticleRoutePrefixes: ['/docs/', '/ai/']` - controls which route prefixes get TechArticle
-- `excludedRoutes: ['/providers']` - skip the providers page (custom React grid that doesn't conform)
-- `authors:` - blog author identity graph
-- `organization:` - StackQL Studios identity, contact, address
-- `breadcrumbLabelMap:` - friendly names for URL path segments in breadcrumbs
-
-If a page has no `<meta name="description">`, the plugin falls back to `siteConfig.tagline`. The homepage explicitly sets a `description` meta in [docusaurus.config.js](docusaurus.config.js) `themeConfig.metadata` to avoid the fallback on the most-cited page.
-
-### Plugin 2: `@stackql/docusaurus-plugin-aeo`
-
-Source: `../docusaurus-plugin-aeo/` (sibling to this repo)
-Published: npm registry, current version pinned in [package.json](package.json)
-Lifecycle: `postBuild` + `allContentLoaded` + theme component injection
-
-Four features:
-
-1. **`.md` companion files** - for every doc and blog page, emits a sibling `.md` at the same path (e.g. `/docs/foo` -> `/docs/foo.md`). Mirrors the raw MDX source. Only emits when there is a source markdown file (React pages and auto-generated index routes are correctly skipped - they have no source to mirror).
-2. **`llms.txt` + `llms-full.txt`** - at site root. `llms.txt` is the corpus index (Markdown bullet list with title and description per page). `llms-full.txt` is the concatenated body of every `.md` companion, separated by `\n\n---\n\n`.
-3. **"Ask AI" dropdown** - swizzled into the breadcrumb row of every doc page and the header of every blog post. MUI outlined Button + Menu. Three providers: Claude, ChatGPT, Perplexity (Gemini was removed - it does not accept URL-encoded prompts). Brand icons are hand-rolled inline SVGs in `src/theme/AskAiButton/brand-icons/` to avoid React-version conflicts with icon libraries.
-4. **`/ai/*` helpers** - exported from `@stackql/docusaurus-plugin-aeo/helpers`. Used to integrate the `/ai/*` content surface with the structured-data plugin.
-
-Config lives at the plugin options object in the plugins array in [docusaurus.config.js](docusaurus.config.js):
-
-- `llmsTxt.instanceSections` - section titles + ordering for the `llms.txt` index (AI Reference -> Documentation -> Blog)
-- `askAi.providerOrder` - dropdown ordering (defaults to claude, chatgpt, perplexity)
-- `askAi.promptTemplate` - the prefilled prompt sent to the AI surface. Default is self-contained ("Read {pageUrl}.md and help me understand it. Summarize the key points, then ask me one clarifying question to dig deeper."). The user can edit it before submitting.
-
-### The `/ai/*` content surface
-
-A second `@docusaurus/plugin-content-docs` instance with `id: 'ai'`, `routeBasePath: '/ai'`, `path: 'ai-content'`, and `sidebarPath: false`. Configured in [docusaurus.config.js](docusaurus.config.js).
-
-Directory structure under [ai-content/](ai-content/):
-
-```
-ai-content/
-├── index.md                    # /ai landing
-├── canonical-definitions/      # "What is X?" pages
-├── comparisons/                # "StackQL vs Y" pages
-├── how-tos/                    # task guides
-├── concepts/                   # design rationale + best practices
-├── faqs/                       # topic-grouped Q&A
-├── architecture/               # internals
-├── troubleshooting/            # error -> resolution
-├── industry-positioning/       # where StackQL fits
-├── tutorials/                  # end-to-end walkthroughs
-└── providers/                  # auto-generated per-provider reference (placeholder)
+```toml
+[[redirects]]
+  from = "/docs/query-library/*"
+  to = "https://query-library.stackql.io/:splat"
+  status = 200
+  force = true
 ```
 
-Each section has an `index.md` landing. Individual reference pages go directly inside each section dir.
+The proxy strips the prefix, so this origin answers at its root. That drives
+the two most load-bearing values in the repo, in
+[docusaurus.config.js](docusaurus.config.js):
 
-`sidebarPath: false` is what keeps these out of the human nav. They're reachable via direct URL, the sitemap, and `llms.txt`.
+```js
+url: 'https://stackql.io',            // canonical public origin - NOT the subdomain
+baseUrl: '/docs/query-library/',      // must equal the proxy prefix, forever
+```
 
-### Netlify configuration
+Consequences:
 
-[netlify.toml](netlify.toml) sets MIME types and cache headers for the AEO files. Critical rules:
+- Every emitted link, asset path and canonical URL carries the
+  `/docs/query-library/` prefix, so pages work when proxied.
+- Browsing the raw subdomain directly shows broken asset paths - expected and
+  accepted; canonicalisation is via the `<link rel="canonical">` tags
+  Docusaurus emits, not redirects. The origin must answer 200 to the proxy -
+  never add a blanket 301 to stackql.io here.
+- The committed machine artifacts land in the build at
+  `build/docs/query-library/` (static copy) while HTML lands at the build
+  root; [netlify.toml](netlify.toml) has non-forced 200 rewrites that surface
+  the artifacts at the origin root paths the proxy delivers
+  (`/manifest.json`, `/index.json`, `/index.md`, `/providers.json`,
+  `/queries/*`). Real files (HTML pages, AEO `.md` companions) shadow the
+  rewrites.
 
-- `*.md` -> `text/markdown; charset=utf-8` (top-level and nested)
-- `/llms.txt` and `/llms-full.txt` -> `text/plain; charset=utf-8`
-- All three get `X-Robots-Tag: index, follow` and `max-age=300` cache
+## The query library
 
-Without these rules Netlify serves `.md` as `application/octet-stream` (browsers download instead of display) and crawlers may skip it.
+`query-library/` masters the library: entries are Markdown with YAML front
+matter under `query-library/queries/<family>/<service>/<slug>.md`, where
+`<family>` is the provider *family* directory (`aws` covers the `aws` and
+`awscc` providers, `databricks` covers `databricks_account` and
+`databricks_workspace`; map in `src/configs/provider-families.json`, shared
+by validation and the site components) and front matter `providers` names the
+actual StackQL providers the template references; a Python
+build step (`query-library/scripts/build-artifacts.py`) compiles them into
+committed artifacts under `static/docs/query-library/` (index.json, index.md,
+manifest.json, providers.json, per-query .json and .md). The Netlify build
+command also regenerates the artifacts at deploy time (belt and braces - a
+stale commit deploys correctly anyway; the committed files stay authoritative
+for the raw-GitHub fallback tier and the PR freshness gate flags staleness).
 
-### The query library
-
-`query-library/` masters the StackQL query library: curated, parameterized
-queries published at `/docs/query-library/*` and consumed by the stackql MCP
-server's `query_library_search` / `query_library_get` tools. Entries are
-Markdown with YAML front matter under `query-library/queries/<provider>/<service>/<slug>.md`;
-a Python build step (`query-library/scripts/build-artifacts.py`) compiles them
-into committed artifacts under `static/docs/query-library/` (index.json,
-index.md, manifest.json, per-query .json and .md). The Netlify build command
-also regenerates the artifacts at deploy time (belt and braces - a stale
-commit deploys correctly anyway; the committed files stay authoritative for
-the raw-GitHub fallback tier and the PR freshness gate still flags staleness).
-
-The human surface has three levels, all inside the query-library docs
-instance so every level carries the library sidebar:
+The human surface has three levels, all in the single `query-library`
+docs-plugin instance (routeBasePath `/`, so public routes sit directly under
+baseUrl):
 
 - landing page `/docs/query-library`: the handwritten
   [query-library/index.mdx](query-library/index.mdx) mounts `LandingContent`,
   which builds the provider card grid from the generated
   `static/docs/query-library/providers.json` + `index.json` (no
   hand-maintained provider list).
-- provider pages `/docs/query-library/<provider>`: generated
-  `query-library/<provider>.mdx` stubs (written by build-artifacts.py,
+- provider family pages `/docs/query-library/<family>`: generated
+  `query-library/<family>.mdx` stubs (written by build-artifacts.py,
   marker-guarded, stale ones deleted) mount `ProviderContent`. Provider
   titles/blurbs come from
   [src/configs/providers-data.json](src/configs/providers-data.json) (shared
-  by providers.ts, the sidebar and the python build); logos resolve
-  favicon-first from `static/img/providers/<p>/` (`favicon.svg|png|ico`, then
-  `<p>.png`, with `_account`/`_workspace` falling back to the base brand dir).
+  by the sidebar and the python build); logos resolve favicon-first from
+  `static/img/providers/<p>/` (`favicon.svg|png|ico`, then `<p>.png`, with
+  `_account`/`_workspace` falling back to the base brand dir). Components
+  resolve the emitted root-relative logo paths through `useBaseUrl`.
 - query pages `/docs/query-library/queries/<id>`: docs-rendered, with a
   `DocItem/Content` theme wrapper
   ([src/theme/DocItem/Content](src/theme/DocItem/Content/index.js)) adding the
@@ -141,148 +92,151 @@ instance so every level carries the library sidebar:
   [src/components/QueryLibrary/](src/components/QueryLibrary/)).
 
 [sidebars-query-library.js](sidebars-query-library.js) builds the sidebar
-dynamically: Overview, then a category per provider directory (label from
-providers-data.json, link to the provider stub, children autogenerated from
-`queries/<provider>/`). The landing and provider MDX stubs are excluded from
-AEO `.md` companions and llms.txt via `companions.exclude` (they are
-component mounts, not content); query pages keep their companions.
+dynamically: a back link to the main stackql.io docs, Overview, then a
+category per family directory (label from providers-data.json, link to the
+family stub, children autogenerated from `queries/<family>/`).
 
-Contract notes (breaking to change - deployed MCP servers depend on them):
+`markdown.format: 'detect'` in docusaurus.config.js parses `.md` entries as
+CommonMark and the `.mdx` stubs as MDX. This is load-bearing: entry prose can
+contain `{{placeholders}}` and literal JSON braces, which MDX treats as
+expressions and fails on, and a top-level `format` front matter key does NOT
+override the parser (only nested `mdx.format` does - the old `format: md`
+front matter this repo once carried was inert). Never hand-edit
+`static/docs/query-library/`; regenerate it. The contributor-facing guide is
+[CONTRIBUTING.md](CONTRIBUTING.md) at the repo root.
 
-- URL paths under `/docs/query-library/` and the raw GitHub fallback path
-  `static/docs/query-library/` (the machine paths manifest.json, index.json,
-  queries/<id>.json and queries/<id>.md are frozen; human HTML routes may be
-  restructured if `doc_url` emission in build-artifacts.py is updated to match)
+## Authoring queries (the non-obvious constraints)
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first; these are the rules that are
+easy to get wrong:
+
+- Front matter must NOT contain an `id` key (Docusaurus reserves it; the
+  build derives the id from the file path).
+- The first ` ```sql ` fence after `## Query` is extracted verbatim as the
+  template. Exactly one statement, terminated with `;`.
+- The `## Notes` section is flattened to a single prose string in the JSON.
+  No lists, no code fences, no headings inside it.
+- `verb` must match the statement: `select` for SELECT, `mutation` for
+  INSERT/UPDATE/DELETE/REPLACE, `lifecycle` for EXEC.
+- Only author queries verified against the provider docs or a live stackql
+  instance (the stackql MCP tools `describe_resource` and
+  `validate_select_query` are the fastest check). Wrong field names poison
+  agent retrieval downstream. New unverified entries stay `status: draft`.
+- `permissions` is provider-native IAM action syntax (`iam:ListUsers`,
+  `Microsoft.Compute/virtualMachines/read`, `compute.instances.list`) and
+  must list only what the template's wire calls require. Omit the field when
+  unsure - agents relay it verbatim as 403 remediation, so a wrong list is
+  worse than none. AWS entries backed by Cloud Control (methods like
+  `create_resource`, `data__Identifier` keys) need `cloudcontrol:ListResources`
+  or `cloudcontrol:GetResource` plus the underlying service actions.
+- Write `intent_keywords` as user asks, not as descriptions ("list all s3
+  buckets", not "s3 bucket enumeration").
+
+## Site chrome (must look identical to stackql.io)
+
+The navbar and footer mirror the main site's config so the proxied pages
+read as one site. Main-site destinations (Install, Providers, Blog, the
+docs dropdown items, footer links, the sidebar "Back to docs" link) are NOT
+external `href` links - each has a redirect stub page under `src/pages/`
+mounting [src/components/ExternalRedirect](src/components/ExternalRedirect/index.jsx),
+which gives the link a real internal route (no external-link icon, passes
+the broken-link checker, works on localhost and on the raw subdomain) and
+instantly forwards to the real page on stackql.io. The stub route list, the
+navbar/footer `to` values (`mainSitePaths` in docusaurus.config.js) and the
+stub files must stay in lockstep with each other and with the main repo's
+navbar/footer. Stub routes are noindexed, excluded from the sitemap and
+from structured-data JSON-LD. The footer is the swizzled main-site footer
+(`src/theme/Footer`, needs `@iconify/react`, `@mui/material`, `clsx`);
+`src/css/global.css` is the full main-site stylesheet for visual parity.
+DocSearch is enabled only when the `ALGOLIA_*` env vars are set (shared
+'stackql' index - set them on Netlify; local builds need none).
+
+## Contract notes (breaking to change - deployed MCP servers depend on them)
+
+- Public URL paths under `https://stackql.io/docs/query-library/` and the
+  raw GitHub fallback path `static/docs/query-library/` in this repo
+  (machine paths manifest.json, index.json, queries/<id>.json and
+  queries/<id>.md are frozen; human HTML routes may be restructured only if
+  `doc_url` emission in build-artifacts.py is updated to match)
+- placeholder syntax `{{name}}` with names matching `[A-Za-z0-9_]+`; param
+  types `string`, `number`, `boolean`, `identifier`, `enum`
+- the `<id>.json` field set (see any file under
+  `static/docs/query-library/queries/`); keep the emitted JSON shape in
+  lockstep with the reference implementation in the core repo
+  (`pkg/mcp_server/content/query_library/`, consumed by
+  `pkg/mcp_server/query_library.go`)
 - `build_id` in manifest.json is a content hash of the library, not the site
   build id; it must change when and only when library content changes
-- entry ids are permanent (path-derived, `provider/service/slug`)
+- entry ids are permanent (path-derived, `family/service/slug`)
 - index.json entries carry `verb` in addition to the contract fields
   (additive only - the MCP server ignores unknown fields; the provider pages
   read it for badges)
+- queries/<id>.json carries optional `author`/`author_company` attribution
+  fields when set in front matter (additive only, same rationale; the query
+  page renders them as "Contributed by")
+- `doc_url` emission stays `https://stackql.io/docs/query-library/queries/<id>`
+  (`SITE_BASE_URL` in query-library/scripts/qlib.py)
 
-Query pages carry `format: md` front matter so Docusaurus parses them as
-CommonMark (template braces in prose would break MDX). Never hand-edit
-`static/docs/query-library/`; regenerate it. See
-[query-library/CONTRIBUTING.md](query-library/CONTRIBUTING.md) and
-[query-library/CLAUDE.md](query-library/CLAUDE.md). CI:
-`.github/workflows/query-library-ci.yml` (per PR) and
-`query-library-nightly.yml` (live verification).
+## AEO plugins (retained from the main site)
 
-### Hand-rolled local components
+- `@stackql/docusaurus-plugin-structured-data` - JSON-LD on every page;
+  `TechArticle` on `/docs/`-prefixed routes (all query pages). Source in the
+  sibling repo `../docusaurus-plugin-structured-data`. This site requires
+  >= 1.5.1 (1.5.0 resolved built HTML paths without stripping baseUrl, so
+  on this site's non-root baseUrl it silently emitted nothing; fixed in the
+  sibling repo and pinned here as ^1.5.1).
+- `@stackql/docusaurus-plugin-aeo` - `.md` companions for query pages,
+  `llms.txt` + `llms-full.txt` at the origin root (public URLs
+  `stackql.io/docs/query-library/llms.txt` etc.), and the Ask AI dropdown
+  on doc pages. Source in the sibling repo `../docusaurus-plugin-aeo`. The
+  landing and provider MDX stubs are excluded from companions/llms.txt via
+  `companions.exclude` (they are component mounts, not content); query
+  pages keep their companions. `@mui/icons-material` stays in package.json
+  solely as this plugin's peer dependency.
 
-[src/components/Gist/index.jsx](src/components/Gist/index.jsx) - local replacement for the unmaintained `react-gist` package (was blocking React 18 upgrade). Drop-in compatible: same `<Gist id="..." />` API. Used by two blog posts.
+Both plugins run in `postBuild`, so `yarn start` shows neither JSON-LD nor
+companions - use `yarn build && yarn serve` to verify the full pipeline.
 
-## Frontmatter conventions for AEO content
+Note a quirk in the AEO plugin: it writes `.md` companions at the permalink
+path under the build dir, which on this site is
+`build/docs/query-library/queries/<id>.md` - the same location Docusaurus
+copies the committed artifact to. Today both are byte-identical mirrors of
+the raw source, so the overwrite is harmless; do not switch
+`companions.format` to `'plain'` here or the deployed contract `.md` would
+silently diverge from the committed artifact.
 
-The structured-data plugin reads several frontmatter fields directly. Use these on `/ai/*` pages especially.
+## CI
 
-```yaml
----
-title: What is StackQL?
-description: One-sentence definition - this becomes the JSON-LD WebPage.description, the llms.txt entry's description, and the OG description.
-keywords: [stackql, sql, cloud, api]
-proficiencyLevel: Beginner          # Beginner | Intermediate | Expert - sets TechArticle.proficiencyLevel
-dependencies: stackql >= 0.6        # optional string - sets TechArticle.dependencies
-faq:
-  - question: Is StackQL a database?
-    answer: No. StackQL is a query runtime...
-  - question: Does StackQL replace Terraform?
-    answer: Not directly. Terraform's primary job is...
----
-```
-
-When `faq:` is present, the plugin emits a `FAQPage` JSON-LD node and links it to the `TechArticle` via `mainEntity`. The `.md` companion preserves the frontmatter verbatim, so an LLM ingesting the markdown gets the FAQ pairs as content too.
-
-`howTo:` and `softwareApplication:` work the same way. See the structured-data plugin README for the full shapes.
-
-## When you make changes
-
-### Always
-
-- Build with the AEO env vars set: `ALGOLIA_APP_ID=dummy ALGOLIA_API_KEY=dummy ALGOLIA_INDEX_NAME=dummy npm run build` (local builds only - production gets real values).
-- Check that the build emits expected `.md` companions: `find build -name "*.md" -type f | wc -l` should be ~240+.
-- Check that `build/llms.txt` and `build/llms-full.txt` exist and are non-empty.
-- For `/ai/*` pages, verify the JSON-LD by inspecting the rendered HTML for `TechArticle` + `FAQPage` types (script we wrote in earlier sessions can be reproduced if needed).
-
-### When adding `/ai/*` content
-
-- Pick the right directory by answer intent (definition, comparison, how-to, etc.).
-- Write the page in the same voice as [ai-content/canonical-definitions/what-is-stackql.md](ai-content/canonical-definitions/what-is-stackql.md) - direct, declarative, technical-encyclopedia tone (think Wikipedia, not a vendor blog).
-- Always include `description:` in frontmatter - this drives JSON-LD, llms.txt, and OG metadata.
-- Use `faq:` frontmatter rather than the `<script type="application/json" data-aeo-faq>` MDX pattern. Both work; frontmatter is cleaner.
-- Cross-link to related `/ai/*` pages even if they don't exist yet - mark them as "not yet written" so Docusaurus's `onBrokenLinks: 'throw'` doesn't fail the build. As pages are written, convert the plain-text references to real links.
-
-### When editing existing docs
-
-- The structured-data plugin doesn't care if you change content - it re-runs on every build. But if you add `faq:`, `howTo:`, `proficiencyLevel:`, or `dependencies:` to frontmatter, those will surface in the JSON-LD automatically.
-
-### When bumping plugin versions
-
-The two AEO plugins are developed in sibling repos. To bump:
-
-```
-yarn add @stackql/docusaurus-plugin-structured-data@<version>
-yarn add @stackql/docusaurus-plugin-aeo@<version>
-```
-
-If the build breaks after a bump, the plugin's CHANGELOG.md is the first place to look. Both plugins maintain detailed changelogs noting breaking changes and config migrations.
-
-### When using `dev` mode
-
-`npm run start` does NOT run `postBuild`, so:
-- No `.md` companions are emitted
-- No `llms.txt` is emitted
-- JSON-LD from the structured-data plugin is NOT injected (it runs in postBuild)
-
-But the Ask AI button (theme component) DOES render in dev. To verify the full AEO pipeline locally, run `npm run build && npm run serve` instead.
-
-After plugin changes, dev cache must be cleared: `rm -rf .docusaurus && npm run start`. Hard refresh the browser too (Ctrl+F5).
-
-## Known issues and workarounds
-
-### `react-gist` peer conflict (resolved)
-
-`react-gist@1.2.4` declares `react: <=17` as a peer dep. Replaced with the local [src/components/Gist/index.jsx](src/components/Gist/index.jsx) component to drop the conflict. Do not reintroduce `react-gist`.
-
-### Bot fetch caches
-
-When the live site changes, AI fetch tools (Claude.ai's web_fetch, ChatGPT's browse, Perplexity) may serve cached responses for some hours. If a recently-deployed `.md` URL appears as 404 in an LLM response, check the URL directly with `curl` first - if curl returns 200, the bot is using a stale cache. Wait a few hours and retest.
-
-### `/install`, `/blog`, `/providers`, `/stackql-deploy`, `/tutorials`, `/mcp`, `/stackqldocs`
-
-These top-level routes are React pages or auto-generated index landings with **no source markdown**. The AEO plugin correctly does not emit `.md` companions for them. They appear in the human nav but not in `llms.txt` or anywhere requiring a `.md` twin. This is by design - do not "fix" by trying to force `.md` emission.
-
-### Mobile breakpoint for Ask AI
-
-The Ask AI button is hidden below 997px viewport width (the Docusaurus mobile breakpoint) to keep the breadcrumb row uncluttered. To verify the button on a desktop test, the browser window must be wider than 997px.
+- `.github/workflows/query-library-ci.yml` - per PR: schema validation,
+  artifact freshness gate (build must produce no diff), stackql parse check.
+- `.github/workflows/query-library-nightly.yml` - nightly live verification
+  against sandbox credentials; commits updated `last_verified` artifacts.
 
 ## Useful commands
 
 ```bash
-# Local dev server (no AEO postBuild, no JSON-LD)
-npm run start
+# Library pipeline
+python query-library/scripts/validate.py
+python query-library/scripts/build-artifacts.py
 
-# Full production build (AEO + JSON-LD + .md companions)
-ALGOLIA_APP_ID=dummy ALGOLIA_API_KEY=dummy ALGOLIA_INDEX_NAME=dummy npm run build
+# Site (no env vars needed)
+yarn start      # dev server - no postBuild AEO outputs, no JSON-LD
+yarn build      # full production build
+yarn serve      # serve build/ locally; pages at /docs/query-library/
 
-# Serve the production build locally to verify
-npm run serve
-
-# Clear dev cache after plugin changes
-rm -rf .docusaurus build
-
-# Inspect emitted JSON-LD on a page
-grep -A1 'application/ld+json' build/docs/command-line-usage/exec.html | head -20
-
-# Count .md companions
-find build -name "*.md" -type f | wc -l
+# Inspect emitted JSON-LD on a query page
+grep -l 'TechArticle' build/queries/aws/*/*.html | head
 
 # Check llms.txt structure
-grep -E '^## ' build/llms.txt
+head -20 build/llms.txt
 ```
 
-## Related repositories
+## When you make changes
 
-- `../docusaurus-plugin-structured-data` - JSON-LD emission plugin source. Bug fixes for stackql.io-specific issues land here first, then ship to npm.
-- `../docusaurus-plugin-aeo` - AEO plugin source. Same pattern.
-- `../../stackql-registry` - StackQL provider registry. Houses the StackqlDeployDropdown component whose styling the Ask AI button was modeled on.
+- After any change under `query-library/queries/`, run validate + build and
+  commit the regenerated `static/docs/query-library/` files in the same
+  commit (CI freshness gate).
+- Never reintroduce main-site content (docs, blog, marketing pages) here;
+  that all lives in the stackql.io repo.
+- If you touch `url`/`baseUrl` or the netlify.toml rewrites, the main repo's
+  proxy redirect must be updated in the same release - they are one contract.

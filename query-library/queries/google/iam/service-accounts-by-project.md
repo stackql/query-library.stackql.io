@@ -1,7 +1,6 @@
 ---
 title: GCP service accounts in a project
 description: Lists IAM service accounts in one project with email, display name and disabled state.
-format: md
 verb: select
 status: draft
 providers: [google]

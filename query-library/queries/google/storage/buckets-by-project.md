@@ -1,7 +1,6 @@
 ---
 title: GCS buckets in a project
 description: Lists Cloud Storage buckets in one project with location, storage class and creation time.
-format: md
 verb: select
 status: draft
 providers: [google]

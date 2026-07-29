@@ -1,7 +1,6 @@
 ---
 title: Azure storage accounts security posture
 description: Lists storage accounts in a subscription with public access, TLS and HTTPS-only settings flattened.
-format: md
 verb: select
 status: draft
 providers: [azure]

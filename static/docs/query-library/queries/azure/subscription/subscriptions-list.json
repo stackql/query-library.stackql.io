@@ -38,5 +38,6 @@
   },
   "template": "SELECT subscriptionId, state FROM azure.subscription.subscriptions;",
   "notes": "For management-group scoping use azure.management_groups.descendants with groupId.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/azure/subscription/subscriptions-list"
+  "doc_url": "https://stackql.io/docs/query-library/queries/azure/subscription/subscriptions-list",
+  "author_company": "StackQL Studios"
 }

@@ -1,0 +1,121 @@
+---
+title: Set CloudWatch log group retention
+description: Updates RetentionInDays on a CloudWatch log group via an asynchronous Cloud Control update.
+verb: mutation
+status: draft
+providers: [awscc]
+services: [logs]
+tags: [aws, logs, cloudwatch, retention, mutation]
+keywords: [log retention, retention policy, cloud control update]
+intent_keywords:
+  - set log group retention
+  - change cloudwatch retention days
+  - update log group retention policy
+auth: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
+params:
+  - name: region
+    type: identifier
+    required: true
+    description: Region the log group is in
+    example: ap-southeast-2
+  - name: log_group_name
+    type: string
+    required: true
+    description: Log group name (the Identifier key)
+    example: my-log-group
+  - name: retention_days
+    type: number
+    required: true
+    description: Retention period in days; CloudWatch Logs accepts only its documented discrete values
+    example: 180
+outputs:
+  - name: ErrorCode
+    type: string
+    description: Failure code when the operation fails, empty otherwise
+  - name: EventTime
+    type: string
+    description: Timestamp of the progress event
+  - name: Identifier
+    type: string
+    description: Log group name the request targets
+  - name: Operation
+    type: string
+    description: UPDATE for this request
+  - name: OperationStatus
+    type: string
+    description: IN_PROGRESS, SUCCESS, FAILED, PENDING or CANCEL states
+  - name: RequestToken
+    type: string
+    description: Token to poll the request with
+  - name: ResourceModel
+    type: string
+    description: Resource state on completion
+  - name: RetryAfter
+    type: string
+    description: Suggested wait before polling again
+  - name: StatusMessage
+    type: string
+    description: Human-readable progress or failure detail
+  - name: TypeName
+    type: string
+    description: AWS::Logs::LogGroup
+cost:
+  fan_out: none
+  expensive: false
+related:
+  - aws/cloud_control/resource-request-by-token
+  - aws/cloud_control/resource-requests-by-status
+---
+
+Sets the retention period on a CloudWatch log group. The update is
+asynchronous: the statement returns a progress event immediately, and the
+change completes in the background. Confirm completion by polling the request
+token from the result.
+
+## Query
+
+```sql
+UPDATE awscc.logs.log_groups
+SET PatchDocument = string('[{"op":"replace","path":"/RetentionInDays","value":{{retention_days}}}]')
+WHERE region = '{{region}}'
+AND Identifier = '{{log_group_name}}'
+RETURNING
+  ErrorCode,
+  EventTime,
+  Identifier,
+  Operation,
+  OperationStatus,
+  RequestToken,
+  ResourceModel,
+  RetryAfter,
+  StatusMessage,
+  TypeName;
+```
+
+## Alternative
+
+A synchronous single-call form that sets the retention policy directly and
+returns no progress event:
+
+```sql
+REPLACE aws.logs.log_groups
+SET
+logGroupName = '{{log_group_name}}',
+retentionInDays = {{retention_days}}
+WHERE
+region = '{{region}}' --required
+AND logGroupName = '{{log_group_name}}' --required;
+```
+
+## Notes
+
+The response is a progress event, not the updated resource: OperationStatus
+is typically IN_PROGRESS with a RequestToken. Poll the token with
+aws/cloud_control/resource-request-by-token (or scan recent requests with
+aws/cloud_control/resource-requests-by-status) until OperationStatus is
+SUCCESS or FAILED. The PatchDocument is an RFC 6902 JSON Patch array against
+the resource's current state, wrapped in string(...); the same pattern
+updates any mutable property of any AWS resource exposed through Cloud
+Control. RetentionInDays accepts only the discrete values CloudWatch Logs
+supports (1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731,
+1096, 1827, 2192, 2557, 2922, 3288, 3653); other values fail the update.

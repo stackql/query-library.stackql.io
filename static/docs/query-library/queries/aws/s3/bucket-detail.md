@@ -1,7 +1,6 @@
 ---
 title: S3 bucket security detail
 description: "Full security attributes for one bucket: public access block, encryption, versioning, ownership."
-format: md
 verb: select
 status: stable
 providers: [aws]

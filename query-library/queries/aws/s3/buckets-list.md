@@ -1,7 +1,6 @@
 ---
 title: S3 buckets cheap enumeration
 description: Enumerates S3 bucket names and regions via the list-only resource; identifiers only, no detail.
-format: md
 verb: select
 status: stable
 providers: [aws]
@@ -32,6 +31,7 @@ cost:
   expensive: false
   notes: Single account-global list call
 related: [aws/s3/bucket-detail]
+author: Jeffrey Aven
 ---
 
 Enumerates every S3 bucket in the account in a single call using the list-only

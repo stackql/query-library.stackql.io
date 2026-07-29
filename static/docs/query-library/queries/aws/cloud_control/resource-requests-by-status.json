@@ -1,0 +1,109 @@
+{
+  "id": "aws/cloud_control/resource-requests-by-status",
+  "title": "Cloud Control resource requests by status",
+  "description": "Lists recent Cloud Control resource requests in a region filtered by operation and status; the follow-up surface for asynchronous AWS mutations.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "awscc"
+  ],
+  "services": [
+    "cloud_control"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Region the requests were made in",
+      "example": "ap-southeast-2"
+    },
+    {
+      "name": "operation",
+      "type": "enum",
+      "required": true,
+      "description": "Operation type to filter on",
+      "example": "CREATE",
+      "enum": [
+        "CREATE",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "name": "operation_status",
+      "type": "enum",
+      "required": true,
+      "description": "Operation status to filter on",
+      "example": "FAILED",
+      "enum": [
+        "PENDING",
+        "IN_PROGRESS",
+        "SUCCESS",
+        "FAILED",
+        "CANCEL_IN_PROGRESS",
+        "CANCEL_COMPLETE"
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Identifier",
+      "type": "string",
+      "description": "Identifier of the resource the request targets"
+    },
+    {
+      "name": "Operation",
+      "type": "string",
+      "description": "CREATE, UPDATE or DELETE"
+    },
+    {
+      "name": "OperationStatus",
+      "type": "string",
+      "description": "Current status of the request"
+    },
+    {
+      "name": "StatusMessage",
+      "type": "string",
+      "description": "Human-readable progress or failure detail"
+    },
+    {
+      "name": "ErrorCode",
+      "type": "string",
+      "description": "Failure code when the operation failed, empty otherwise"
+    },
+    {
+      "name": "TypeName",
+      "type": "string",
+      "description": "Resource type, e.g. AWS::Logs::LogGroup"
+    },
+    {
+      "name": "RequestToken",
+      "type": "string",
+      "description": "Token keying the request; use it for a single-request lookup"
+    },
+    {
+      "name": "EventTime",
+      "type": "string",
+      "description": "Timestamp of the latest progress event"
+    }
+  ],
+  "cost": {
+    "fan_out": "region",
+    "expensive": false,
+    "notes": "One list call per region when swept across regions"
+  },
+  "related": [
+    "aws/cloud_control/resource-request-by-token",
+    "aws/logs/log-group-retention-update"
+  ],
+  "template": "SELECT Identifier, Operation, OperationStatus, StatusMessage, ErrorCode, TypeName, RequestToken, EventTime\nFROM awscc.cloud_control.resource_requests\nWHERE ResourceRequestStatusFilter = '{\"OperationStatuses\": [\"{{operation_status}}\"], \"Operations\": [\"{{operation}}\"]}'\nAND region = '{{region}}';",
+  "notes": "ResourceRequestStatusFilter is a JSON document and both lists accept multiple values - widen the filter by editing it, e.g. '{\"OperationStatuses\": [\"FAILED\"], \"Operations\": [\"CREATE\", \"UPDATE\"]}'. Common asks: FAILED CREATE requests after provisioning, SUCCESS UPDATE requests to confirm completion, IN_PROGRESS to see what is still running. An empty result means no matching requests in the region's recent history - completed requests age out. Use the RequestToken with aws/cloud_control/resource-request-by-token to poll a single request.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/cloud_control/resource-requests-by-status",
+  "last_verified": "2026-07-29"
+}

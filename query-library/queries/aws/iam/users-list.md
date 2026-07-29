@@ -1,7 +1,6 @@
 ---
 title: IAM users enumeration
 description: Enumerates IAM user names in the account; IAM is global, the region only routes the call.
-format: md
 verb: select
 status: draft
 providers: [aws]

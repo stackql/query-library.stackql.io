@@ -1,7 +1,6 @@
 ---
 title: Cloudflare zones
 description: Lists all Cloudflare zones visible to the token with status and pause state.
-format: md
 verb: select
 status: draft
 providers: [cloudflare]

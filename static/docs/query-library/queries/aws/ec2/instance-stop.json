@@ -54,7 +54,7 @@
   "related": [
     "aws/ec2/instances-by-region"
   ],
-  "template": "EXEC aws.ec2.instances.stop @InstanceId = '{{instance_id}}', @region = '{{region}}';",
-  "notes": "The call is asynchronous: it returns when the instance enters the stopping state, not when it is stopped. Poll aws/ec2/instances-by-region until instanceState.name is stopped. The matching start operation is aws.ec2.instances.start with the same arguments.",
+  "template": "EXEC aws.ec2.instances.stop_instances \n@InstanceId='{{instance_id}}', \n@region='{{region}}';",
+  "notes": "The call is asynchronous: it returns when the instance enters the stopping state, not when it is stopped. Poll aws/ec2/instances-by-region until instanceState.name is stopped. The matching start operation is aws.ec2.instances.start with the same arguments. The operation also accepts optional @Hibernate, @SkipOsShutdown, @DryRun and @Force boolean arguments.",
   "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/instance-stop"
 }

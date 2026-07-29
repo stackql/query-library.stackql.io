@@ -1,0 +1,8 @@
+{
+  "awscc": "aws",
+  "azure_extras": "azure",
+  "azure_isv": "azure",
+  "azure_stack": "azure",
+  "databricks_account": "databricks",
+  "databricks_workspace": "databricks"
+}

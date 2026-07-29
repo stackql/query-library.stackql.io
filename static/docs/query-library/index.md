@@ -6,20 +6,23 @@
 > (`<id>.json`) consumed by the stackql MCP server's `query_library_search`
 > and `query_library_get` tools.
 
-Build `ql-1075f62d28974fd8` | 18 entries | machine catalogue:
+Build `ql-12708c8552907f46` | 21 entries | machine catalogue:
 [index.json](https://stackql.io/docs/query-library/index.json) |
 [manifest.json](https://stackql.io/docs/query-library/manifest.json)
 
 ## aws
 
-- [Set CloudWatch log group retention](https://stackql.io/docs/query-library/queries/aws/cloud_control/log-group-retention-update) (mutation; params: region, log_group_name, retention_days): Updates RetentionInDays on a log group via Cloud Control JSON Patch semantics.
+- [Cloud Control resource request by token](https://stackql.io/docs/query-library/queries/aws/cloud_control/resource-request-by-token) (select; draft; params: region, request_token): Gets the progress event for one Cloud Control resource request by its request token; poll it until the operation completes.
+- [Cloud Control resource requests by status](https://stackql.io/docs/query-library/queries/aws/cloud_control/resource-requests-by-status) (select; params: region, operation, operation_status): Lists recent Cloud Control resource requests in a region filtered by operation and status; the follow-up surface for asynchronous AWS mutations.
 - [Stop an EC2 instance](https://stackql.io/docs/query-library/queries/aws/ec2/instance-stop) (lifecycle; draft; params: region, instance_id): Stops one EC2 instance by instance id via the native stop lifecycle operation.
 - [EC2 instances in a region](https://stackql.io/docs/query-library/queries/aws/ec2/instances-by-region) (select; draft; params: region): Lists EC2 instances in one region with type, state, addressing and network placement.
 - [Enabled AWS regions](https://stackql.io/docs/query-library/queries/aws/ec2/regions-enabled) (select): Lists AWS regions with their opt-in status; exclude not-opted-in regions from sweeps.
 - [IAM users enumeration](https://stackql.io/docs/query-library/queries/aws/iam/users-list) (select; draft): Enumerates IAM user names in the account; IAM is global, the region only routes the call.
 - [Lambda functions in a region](https://stackql.io/docs/query-library/queries/aws/lambda/functions-list) (select; draft; params: region): Enumerates Lambda function names in one region via the list-only resource.
+- [Set CloudWatch log group retention](https://stackql.io/docs/query-library/queries/aws/logs/log-group-retention-update) (mutation; draft; params: region, log_group_name, retention_days): Updates RetentionInDays on a CloudWatch log group via an asynchronous Cloud Control update.
 - [S3 bucket security detail](https://stackql.io/docs/query-library/queries/aws/s3/bucket-detail) (select; params: region, bucket_name): Full security attributes for one bucket: public access block, encryption, versioning, ownership.
 - [S3 buckets cheap enumeration](https://stackql.io/docs/query-library/queries/aws/s3/buckets-list) (select; params: region): Enumerates S3 bucket names and regions via the list-only resource; identifiers only, no detail.
+- [Find AWS resource identifiers by tag](https://stackql.io/docs/query-library/queries/aws/tagging/resources-by-tag) (select; params: region, resource_type, tag_key, tag_value): Resolves identifiers for ID-centric AWS resource types by querying the tagging API with a resource type and tag filter; returns ARNs, extracted ids and tags.
 
 ## azure
 
@@ -31,9 +34,9 @@ Build `ql-1075f62d28974fd8` | 18 entries | machine catalogue:
 
 - [Cloudflare zones](https://stackql.io/docs/query-library/queries/cloudflare/zones/zones-list) (select; draft): Lists all Cloudflare zones visible to the token with status and pause state.
 
-## databricks_account
+## databricks
 
-- [Databricks workspaces in an account](https://stackql.io/docs/query-library/queries/databricks_account/provisioning/workspaces-list) (select; draft; params: account_id): Lists all Databricks workspaces in an account with cloud, region and provisioning status.
+- [Databricks workspaces in an account](https://stackql.io/docs/query-library/queries/databricks/provisioning/workspaces-list) (select; draft; params: account_id): Lists all Databricks workspaces in an account with cloud, region and provisioning status.
 
 ## github
 

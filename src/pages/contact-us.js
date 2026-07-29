@@ -1,10 +1,9 @@
+﻿// GENERATED-STYLE stub: makes the main-site path /contact-us an internal
+// route on this site (no external-link icon in nav/footer) and forwards to
+// stackql.io. See src/components/ExternalRedirect.
 import React from 'react';
-import Head from '@docusaurus/Head';
+import ExternalRedirect from '@site/src/components/ExternalRedirect';
 
-export default function ConactUs() {
-  return (
-    <Head>
-    <meta http-equiv="refresh" content="0;URL='https://github.com/orgs/stackql/discussions/new?category=general&title=Hey%20StackQL!'" />
-    </Head>
-  );
-};
+export default function RedirectPage() {
+  return <ExternalRedirect to="https://stackql.io/contact-us" />;
+}

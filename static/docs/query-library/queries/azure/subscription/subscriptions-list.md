@@ -1,7 +1,6 @@
 ---
 title: Azure subscriptions
 description: Lists subscriptions visible to the credential, tenant-wide; audit only Enabled subscriptions.
-format: md
 verb: select
 status: stable
 providers: [azure]
@@ -24,6 +23,7 @@ outputs:
 cost:
   fan_out: none
   expensive: false
+author_company: StackQL Studios
 ---
 
 Lists every Azure subscription visible to the credential across the tenant.

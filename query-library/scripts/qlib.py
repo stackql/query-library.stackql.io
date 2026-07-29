@@ -8,6 +8,7 @@ Docusaurus reserves the id key.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -19,11 +20,26 @@ LIBRARY_DIR = REPO_ROOT / "query-library"
 QUERIES_DIR = LIBRARY_DIR / "queries"
 SCHEMA_PATH = LIBRARY_DIR / "schema" / "front-matter.schema.json"
 STATIC_OUT_DIR = REPO_ROOT / "static" / "docs" / "query-library"
+PROVIDER_FAMILIES_PATH = REPO_ROOT / "src" / "configs" / "provider-families.json"
 
 SITE_BASE_URL = "https://stackql.io/docs/query-library"
 
 # Mirrors of the constraints enforced by the MCP server (query_library.go).
 ID_RE = re.compile(r"^[a-z0-9_-]+(/[a-z0-9_-]+)*$")
+
+# The first id segment is the provider *family* - the brand users and agents
+# think of, not necessarily a literal StackQL provider name. Front matter
+# `providers` lists the actual providers the template references; validation
+# maps providers[0] through this table to check it matches the directory.
+# Providers absent from the table are their own family. The map lives in
+# src/configs/provider-families.json so the site components (which link
+# provider badges to family pages) share it.
+PROVIDER_FAMILIES = json.loads(PROVIDER_FAMILIES_PATH.read_text(encoding="utf-8"))
+
+
+def provider_family(provider: str) -> str:
+    return PROVIDER_FAMILIES.get(provider, provider)
+
 IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Za-z0-9_]+)\}\}")
 # Any {{...}} occurrence, used to detect malformed placeholder names.
@@ -177,6 +193,12 @@ def entry_to_doc(entry: Entry) -> dict:
     doc["doc_url"] = entry.doc_url
     if fm.get("last_verified"):
         doc["last_verified"] = str(fm["last_verified"])
+    # Attribution (additive to the frozen field set; the MCP server ignores
+    # unknown fields, the query page renders them).
+    if fm.get("author"):
+        doc["author"] = fm["author"]
+    if fm.get("author_company"):
+        doc["author_company"] = fm["author_company"]
     return doc
 
 

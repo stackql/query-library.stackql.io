@@ -1,3 +1,28 @@
+# Origin site for the StackQL query library.
+#
+# CONTRACT: this site is served to the public through the main site's proxy
+# rewrite (stackql.io repo netlify.toml):
+#
+#   from = "/docs/query-library/*"
+#   to   = "https://query-library.stackql.io/:splat"
+#   status = 200, force = true
+#
+# The proxy STRIPS the /docs/query-library prefix, so this origin answers at
+# its root: stackql.io/docs/query-library/foo -> origin/foo. Docusaurus is
+# configured with baseUrl /docs/query-library/ (docusaurus.config.js - the
+# two values must agree with the main repo's redirect forever), which means
+# the HTML pages land at the build root while the committed machine
+# artifacts (static/docs/query-library/, path frozen for the raw-GitHub
+# fallback tier) are copied by Docusaurus to build/docs/query-library/.
+# The [[redirects]] below bridge that gap: they surface the artifacts at the
+# origin ROOT paths the proxy delivers. They are NOT forced, so any real
+# file at the request path (the HTML pages under /queries/*) wins and only
+# unmatched paths (.json documents, .md companions - the AEO plugin writes
+# those into build/docs/query-library/ too) fall through to the artifact
+# tree. The origin must answer 200 to the proxy - never add a blanket 301
+# to the canonical URL here; canonicalisation is handled by the
+# <link rel="canonical"> tags Docusaurus emits from url + baseUrl.
+
 [build]
   # Belt and braces: regenerate the query library artifacts at deploy time so
   # a stale static/docs/query-library/ commit cannot ship (the PR freshness
@@ -11,6 +36,40 @@
 [build.environment]
   PYTHON_VERSION = "3.12"
 
+# --- Contract artifact rewrites (machine catalogue at the origin root) ---
+# Public URLs (via the proxy): stackql.io/docs/query-library/{manifest.json,
+# index.json, index.md, providers.json, queries/<id>.{json,md}}.
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/docs/query-library/manifest.json"
+  status = 200
+
+[[redirects]]
+  from = "/index.json"
+  to = "/docs/query-library/index.json"
+  status = 200
+
+[[redirects]]
+  from = "/index.md"
+  to = "/docs/query-library/index.md"
+  status = 200
+
+[[redirects]]
+  from = "/providers.json"
+  to = "/docs/query-library/providers.json"
+  status = 200
+
+# Not forced: rendered query pages (/queries/<id>) exist as real files and
+# shadow this rule; the .md/.json documents (no built file at the root path)
+# fall through to the artifact tree.
+[[redirects]]
+  from = "/queries/*"
+  to = "/docs/query-library/queries/:splat"
+  status = 200
+
+# --- Headers (the proxy passes origin response headers through) ---
+
 # Serve raw markdown companion files with the correct MIME type so AI
 # crawlers and the Ask-AI button's deep links get plain text rather than
 # HTML or a download prompt.
@@ -20,16 +79,19 @@
     Content-Type = "text/markdown; charset=utf-8"
     Cache-Control = "public, max-age=300, must-revalidate"
     X-Robots-Tag = "index, follow"
+    Access-Control-Allow-Origin = "*"
 
-# Same treatment for nested .md files (e.g. /docs/intro.md, /ai/.../foo.md).
+# Same treatment for nested .md files (query companions and artifacts).
 [[headers]]
   for = "/**/*.md"
   [headers.values]
     Content-Type = "text/markdown; charset=utf-8"
     Cache-Control = "public, max-age=300, must-revalidate"
     X-Robots-Tag = "index, follow"
+    Access-Control-Allow-Origin = "*"
 
 # llms.txt + llms-full.txt: plain text, edge-cached, robot-friendly.
+# Public URLs via the proxy: stackql.io/docs/query-library/llms.txt etc.
 [[headers]]
   for = "/llms.txt"
   [headers.values]
@@ -44,19 +106,50 @@
     Cache-Control = "public, max-age=300, must-revalidate"
     X-Robots-Tag = "index, follow"
 
-# --- Query library (contract surface for the stackql MCP server) ---
-# The server fetches manifest.json, index.json and queries/<id>.json from
-# /docs/query-library/. CORS is open on the whole prefix so browser-based
-# MCP hosts can fetch too. .md files under here inherit the text/markdown
-# rules above.
+# --- Query library machine catalogue (contract surface for the stackql MCP
+# server, which fetches manifest.json, index.json and queries/<id>.json).
+# CORS is open so browser-based MCP hosts can fetch too. Header rules match
+# the REQUEST path, so the root paths below cover proxied requests; the
+# /docs/query-library/* mirrors cover direct hits on the artifact tree.
 
+# Catalogue and manifest: short cache so new builds are picked up quickly
+# (the MCP server re-checks build_id on a 300s TTL).
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=300, must-revalidate"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/index.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=300, must-revalidate"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/providers.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=300, must-revalidate"
+    Access-Control-Allow-Origin = "*"
+
+# Per-query JSON documents: content is cached by build_id upstream, so a
+# longer edge cache is safe.
+[[headers]]
+  for = "/queries/*.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=3600"
+    Access-Control-Allow-Origin = "*"
+
+# Direct-path mirrors of the artifact tree.
 [[headers]]
   for = "/docs/query-library/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
 
-# Catalogue and manifest: short cache so new builds are picked up quickly
-# (the MCP server re-checks build_id on a 300s TTL).
 [[headers]]
   for = "/docs/query-library/manifest.json"
   [headers.values]
@@ -69,8 +162,6 @@
     Content-Type = "application/json; charset=utf-8"
     Cache-Control = "public, max-age=300, must-revalidate"
 
-# Per-query JSON documents: content is cached by build_id upstream, so a
-# longer edge cache is safe.
 [[headers]]
   for = "/docs/query-library/queries/*.json"
   [headers.values]

@@ -3,8 +3,8 @@
 
 Checks (per PR CI gate):
 - YAML front matter conforms to schema/front-matter.schema.json
-- entry id (path-derived) is provider/service/slug and matches the MCP id regexp
-- id segment 1 is in providers, id segment 2 is in services
+- entry id (path-derived) is family/service/slug and matches the MCP id regexp
+- id segment 1 is the provider family of providers[0], id segment 2 is in services
 - exactly one SQL statement in the '## Query' fence, terminated with ';'
 - placeholder/param parity in both directions
 - placeholder names are well formed ({{name}}, [A-Za-z0-9_]+)
@@ -36,6 +36,7 @@ from qlib import (
     VERB_TO_FIRST_KEYWORDS,
     Entry,
     load_entries,
+    provider_family,
 )
 
 MDX_LINE_RE = re.compile(r"^\s*(import|export)\s+", re.MULTILINE)
@@ -56,14 +57,16 @@ def validate_entry(entry: Entry, schema: dict) -> list[str]:
         errors.append(f"id {entry.id!r} does not match {ID_RE.pattern}")
     segments = entry.id.split("/")
     if len(segments) != 3:
-        errors.append(f"id {entry.id!r} must have exactly 3 segments (provider/service/slug)")
+        errors.append(f"id {entry.id!r} must have exactly 3 segments (family/service/slug)")
     else:
-        provider_seg, service_seg = segments[0], segments[1]
+        family_seg, service_seg = segments[0], segments[1]
         providers = fm.get("providers") or []
         services = fm.get("services") or []
-        if providers and providers[0] != provider_seg:
+        if providers and provider_family(providers[0]) != family_seg:
             errors.append(
-                f"first provider {providers[0]!r} must equal id path segment {provider_seg!r}"
+                f"first provider {providers[0]!r} (family "
+                f"{provider_family(providers[0])!r}) must map to id path segment "
+                f"{family_seg!r}"
             )
         if services and service_seg not in services:
             errors.append(f"services must include id path segment {service_seg!r}")

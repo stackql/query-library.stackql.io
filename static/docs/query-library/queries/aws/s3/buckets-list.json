@@ -50,5 +50,6 @@
   ],
   "template": "SELECT bucket_name, region FROM aws.s3.buckets_list_only WHERE region = '{{region}}';",
   "notes": "S3 bucket listing is account-global; the region routes the request. Pair with aws/s3/bucket-detail for per-bucket attributes, one request per bucket.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/s3/buckets-list"
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/s3/buckets-list",
+  "author": "Jeffrey Aven"
 }

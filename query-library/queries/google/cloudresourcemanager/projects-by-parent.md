@@ -1,7 +1,6 @@
 ---
 title: GCP projects under an org or folder
 description: Lists projects under a parent organization or folder; audit only ACTIVE projects.
-format: md
 verb: select
 status: stable
 providers: [google]

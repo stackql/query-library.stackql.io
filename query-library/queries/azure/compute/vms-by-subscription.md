@@ -1,7 +1,6 @@
 ---
 title: Azure VMs in a subscription
 description: Lists all virtual machines across a subscription with name, location and tags.
-format: md
 verb: select
 status: draft
 providers: [azure]

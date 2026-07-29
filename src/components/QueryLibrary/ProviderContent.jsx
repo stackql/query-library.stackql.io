@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import catalogue from '@site/static/docs/query-library/index.json';
 import providersSummary from '@site/static/docs/query-library/providers.json';
 import VerbBadge, {StatusBadge} from './VerbBadge';
@@ -15,13 +16,16 @@ export default function ProviderContent({provider}) {
       description: '',
       logo: null,
     };
+  // providers.json emits site-root-relative logo paths; resolve them under
+  // baseUrl so this origin serves its own copies from static/img/providers/.
+  const logoUrl = useBaseUrl(summary.logo || '');
   const entries = catalogue.entries.filter((e) => e.id.split('/')[0] === provider);
   return (
     <>
       <div className={styles.providerCardHeader}>
         {summary.logo && (
           <img
-            src={summary.logo}
+            src={logoUrl}
             alt={`${summary.title} logo`}
             className={styles.providerLogo}
           />

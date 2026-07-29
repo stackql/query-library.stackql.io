@@ -27,8 +27,10 @@ function labelFor(id) {
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   queryLibrarySidebar: [
-    // Escape hatch back to the main docs - this instance replaces the main
-    // docs sidebar, so without it there is no visible way back.
+    // Escape hatch back to the main stackql.io docs. '/docs' resolves under
+    // baseUrl to the redirect stub at src/pages/docs/index.js, so the link
+    // renders as internal (no external-link icon) and forwards to
+    // stackql.io/docs.
     {
       type: 'link',
       href: '/docs',

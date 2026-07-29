@@ -1,7 +1,6 @@
 ---
 title: Stop an EC2 instance
 description: Stops one EC2 instance by instance id via the native stop lifecycle operation.
-format: md
 verb: lifecycle
 status: draft
 providers: [aws]
@@ -47,7 +46,9 @@ again; instance-store data is lost on stop.
 ## Query
 
 ```sql
-EXEC aws.ec2.instances.stop @InstanceId = '{{instance_id}}', @region = '{{region}}';
+EXEC aws.ec2.instances.stop_instances 
+@InstanceId='{{instance_id}}', 
+@region='{{region}}';
 ```
 
 ## Notes
@@ -55,4 +56,5 @@ EXEC aws.ec2.instances.stop @InstanceId = '{{instance_id}}', @region = '{{region
 The call is asynchronous: it returns when the instance enters the stopping
 state, not when it is stopped. Poll aws/ec2/instances-by-region until
 instanceState.name is stopped. The matching start operation is
-aws.ec2.instances.start with the same arguments.
+aws.ec2.instances.start with the same arguments. The operation also accepts
+optional @Hibernate, @SkipOsShutdown, @DryRun and @Force boolean arguments.

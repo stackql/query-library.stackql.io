@@ -1,0 +1,92 @@
+{
+  "id": "aws/cloud_control/resource-request-by-token",
+  "title": "Cloud Control resource request by token",
+  "description": "Gets the progress event for one Cloud Control resource request by its request token; poll it until the operation completes.",
+  "mutation": false,
+  "verb": "select",
+  "status": "draft",
+  "providers": [
+    "awscc"
+  ],
+  "services": [
+    "cloud_control"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Region the request was made in",
+      "example": "ap-southeast-2"
+    },
+    {
+      "name": "request_token",
+      "type": "string",
+      "required": true,
+      "description": "Request token returned by the originating mutation",
+      "example": "54061545-e0a0-4ef0-b213-41fda81d8c24"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Identifier",
+      "type": "string",
+      "description": "Identifier of the resource the request targets"
+    },
+    {
+      "name": "Operation",
+      "type": "string",
+      "description": "CREATE, UPDATE or DELETE"
+    },
+    {
+      "name": "OperationStatus",
+      "type": "string",
+      "description": "PENDING, IN_PROGRESS, SUCCESS, FAILED or CANCEL states"
+    },
+    {
+      "name": "StatusMessage",
+      "type": "string",
+      "description": "Human-readable progress or failure detail"
+    },
+    {
+      "name": "ErrorCode",
+      "type": "string",
+      "description": "Failure code when the operation failed, empty otherwise"
+    },
+    {
+      "name": "RetryAfter",
+      "type": "string",
+      "description": "Suggested wait before polling again"
+    },
+    {
+      "name": "ResourceModel",
+      "type": "string",
+      "description": "Resource state on completion"
+    },
+    {
+      "name": "TypeName",
+      "type": "string",
+      "description": "Resource type, e.g. AWS::Logs::LogGroup"
+    },
+    {
+      "name": "EventTime",
+      "type": "string",
+      "description": "Timestamp of the latest progress event"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false
+  },
+  "related": [
+    "aws/cloud_control/resource-requests-by-status",
+    "aws/logs/log-group-retention-update"
+  ],
+  "template": "SELECT Identifier, Operation, OperationStatus, StatusMessage, ErrorCode, RetryAfter, ResourceModel, TypeName, EventTime\nFROM awscc.cloud_control.resource_request\nWHERE RequestToken = '{{request_token}}'\nAND region = '{{region}}';",
+  "notes": "Poll until OperationStatus is SUCCESS or FAILED; RetryAfter suggests how long to wait between polls. On failure, StatusMessage and ErrorCode carry the reason. On success, ResourceModel carries the resulting resource state, or re-read the resource directly. An unknown or expired token fails the request - completed requests age out of the service's history.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/cloud_control/resource-request-by-token"
+}

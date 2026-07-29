@@ -1,7 +1,6 @@
 ---
 title: GCE instances in a zone
 description: Lists Compute Engine instances in one project and zone with status, machine type and creation time.
-format: md
 verb: select
 status: draft
 providers: [google]

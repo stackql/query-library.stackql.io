@@ -1,7 +1,6 @@
 ---
 title: Lambda functions in a region
 description: Enumerates Lambda function names in one region via the list-only resource.
-format: md
 verb: select
 status: draft
 providers: [aws]

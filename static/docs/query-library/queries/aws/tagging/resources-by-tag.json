@@ -1,0 +1,82 @@
+{
+  "id": "aws/tagging/resources-by-tag",
+  "title": "Find AWS resource identifiers by tag",
+  "description": "Resolves identifiers for ID-centric AWS resource types by querying the tagging API with a resource type and tag filter; returns ARNs, extracted ids and tags.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "awscc"
+  ],
+  "services": [
+    "tagging"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "tag:GetResources"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Region to search in",
+      "example": "ap-southeast-2"
+    },
+    {
+      "name": "resource_type",
+      "type": "string",
+      "required": true,
+      "description": "Resource type filter in service:resourceType form, e.g. ec2:vpc, ec2:subnet, ec2:security-group",
+      "example": "ec2:vpc"
+    },
+    {
+      "name": "tag_key",
+      "type": "string",
+      "required": true,
+      "description": "Tag key to match",
+      "example": "stackql:stack-name"
+    },
+    {
+      "name": "tag_value",
+      "type": "string",
+      "required": true,
+      "description": "Tag value to match",
+      "example": "sqlserver-migration-lab"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "resource_arn",
+      "type": "string",
+      "description": "Full ARN of the matching resource"
+    },
+    {
+      "name": "resource_id",
+      "type": "string",
+      "description": "Identifier extracted from the ARN (last /-delimited segment)"
+    },
+    {
+      "name": "key",
+      "type": "string",
+      "description": "Tag key (one row per tag on each matching resource)"
+    },
+    {
+      "name": "value",
+      "type": "string",
+      "description": "Tag value"
+    }
+  ],
+  "cost": {
+    "fan_out": "region",
+    "expensive": false,
+    "notes": "One call per region and resource type when swept"
+  },
+  "template": "SELECT resource_arn, resource_id, key, value FROM\n(\nSELECT\nResourceARN as resource_arn,\nsplit_part(ResourceARN, '/', -1) as resource_id,\njson_extract(json_each.value, '$.Key') as key,\njson_extract(json_each.value, '$.Value') as value\nFROM awscc.tagging.tagged_resources, json_each(tags)\nWHERE region = '{{region}}'\nAND ResourceTypeFilters = '[\"{{resource_type}}\"]'\nAND TagFilters = '[{\"Key\": \"{{tag_key}}\", \"Values\": [\"{{tag_value}}\"]}]'\n) t;",
+  "notes": "TagFilters is a JSON array: multiple filter objects must all match (AND), while multiple entries in one filter's Values list match any (OR), e.g. '[{\"Key\": \"stackql:stack-name\", \"Values\": [\"sqlserver-migration-lab\"]}, {\"Key\": \"stackql:stack-env\", \"Values\": [\"dev\"]}]'. ResourceTypeFilters also accepts multiple entries. All tags of each matching resource are returned, not just the filtered key. resource_id takes the last /-delimited ARN segment, which suits most ARN formats (vpc/vpc-..., subnet/subnet-...); for resource types whose ARN ends in a :-delimited id, split on ':' instead. The JSON exploding functions are backend dialect: json_each/json_extract on the default embedded SQLite backend, json_array_elements_text with json_extract_path_text on PostgreSQL.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/tagging/resources-by-tag",
+  "last_verified": "2026-07-29"
+}

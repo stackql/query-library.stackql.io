@@ -1,7 +1,6 @@
 ---
 title: EC2 instances in a region
 description: Lists EC2 instances in one region with type, state, addressing and network placement.
-format: md
 verb: select
 status: draft
 providers: [aws]

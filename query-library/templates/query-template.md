@@ -1,7 +1,6 @@
 ---
 title: Short human title (unique across the library)
 description: One or two sentences describing what the query answers and any scoping caveat. This drives search, the catalogue and page metadata.
-format: md
 verb: select
 status: draft
 providers: [aws]
@@ -29,6 +28,10 @@ cost:
   fan_out: none
   expensive: false
 related: []
+# Attribution (optional, either or both): rendered as "Contributed by" on the
+# query page and carried in the emitted JSON. Uncomment to take the credit.
+# author: Your Name
+# author_company: Your Company
 ---
 
 One short paragraph expanding the description: what the query returns, when to use
