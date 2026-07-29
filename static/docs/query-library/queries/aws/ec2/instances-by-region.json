@@ -4,13 +4,12 @@
   "description": "Lists EC2 instances in one region with type, state, addressing and network placement.",
   "mutation": false,
   "verb": "select",
-  "status": "draft",
+  "status": "stable",
   "providers": [
     "aws"
   ],
   "services": [
-    "ec2",
-    "ec2_native"
+    "ec2"
   ],
   "auth": [
     "AWS_ACCESS_KEY_ID",
@@ -25,47 +24,47 @@
       "type": "identifier",
       "required": true,
       "description": "Region to list instances in",
-      "example": "us-east-1"
+      "example": "ap-southeast-2"
     }
   ],
   "outputs": [
     {
-      "name": "instanceId",
+      "name": "instance_id",
       "type": "string",
       "description": "Instance identifier"
     },
     {
-      "name": "instanceType",
+      "name": "instance_type",
       "type": "string",
-      "description": "Instance type (e.g. t3.micro)"
+      "description": "Instance type, e.g. t3.micro"
     },
     {
-      "name": "instanceState",
-      "type": "object",
-      "description": "State object; the name key holds running, stopped, etc."
+      "name": "state_name",
+      "type": "string",
+      "description": "Instance state name - running, stopped, terminated"
     },
     {
-      "name": "privateIpAddress",
+      "name": "private_ip_address",
       "type": "string",
       "description": "Primary private IPv4 address"
     },
     {
-      "name": "ipAddress",
+      "name": "public_ip_address",
       "type": "string",
-      "description": "Public IPv4 address, empty when none"
+      "description": "Public IPv4 address; the string null when the instance has none"
     },
     {
-      "name": "launchTime",
+      "name": "launch_time",
       "type": "string",
       "description": "Launch timestamp"
     },
     {
-      "name": "vpcId",
+      "name": "vpc_id",
       "type": "string",
       "description": "VPC the instance is in"
     },
     {
-      "name": "subnetId",
+      "name": "subnet_id",
       "type": "string",
       "description": "Subnet the instance is in"
     }
@@ -77,9 +76,11 @@
   },
   "related": [
     "aws/ec2/regions-enabled",
-    "aws/ec2/instance-stop"
+    "aws/ec2/instance-state-management",
+    "aws/tagging/resources-by-tag"
   ],
-  "template": "SELECT instanceId, instanceType, instanceState, privateIpAddress, ipAddress, launchTime, vpcId, subnetId FROM aws.ec2_native.instances WHERE region = '{{region}}';",
-  "notes": "instanceState is an object; filter on its name key (running, stopped, terminated) client-side or with JSON extraction. Terminated instances remain visible for about an hour after termination. ipAddress is empty for instances with no public IP.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/instances-by-region"
+  "template": "SELECT\ninstance_id,\ninstance_type,\njson_extract(state, '$.name') as state_name,\nprivate_ip_address,\npublic_ip_address,\nlaunch_time,\nvpc_id,\nsubnet_id\nFROM aws.ec2.instances\nWHERE region = '{{region}}';",
+  "notes": "state is a JSON object with lowercase keys ({\"code\":80,\"name\":\"stopped\"}), so extract the name rather than comparing the column directly; code 16 is running and 80 is stopped. public_ip_address is the string null for instances with no public IP, not SQL NULL. Terminated instances stay visible for about an hour after termination, so filter on state_name when counting live capacity. tags is an object wrapping an item array of key/value pairs. In the tags variation the tag_key filter must sit in the outer query: a predicate on a json_each expression in the same WHERE clause as the table function is silently dropped, returning every tag instead of the one asked for. To find instances by tag across a region, use aws/tagging/resources-by-tag instead.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/instances-by-region",
+  "last_verified": "2026-07-29"
 }

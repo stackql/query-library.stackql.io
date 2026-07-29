@@ -100,5 +100,6 @@
   ],
   "template": "UPDATE awscc.logs.log_groups\nSET PatchDocument = string('[{\"op\":\"replace\",\"path\":\"/RetentionInDays\",\"value\":{{retention_days}}}]')\nWHERE region = '{{region}}'\nAND Identifier = '{{log_group_name}}'\nRETURNING\n  ErrorCode,\n  EventTime,\n  Identifier,\n  Operation,\n  OperationStatus,\n  RequestToken,\n  ResourceModel,\n  RetryAfter,\n  StatusMessage,\n  TypeName;",
   "notes": "The response is a progress event, not the updated resource: OperationStatus is typically IN_PROGRESS with a RequestToken. Poll the token with aws/cloud_control/resource-request-by-token (or scan recent requests with aws/cloud_control/resource-requests-by-status) until OperationStatus is SUCCESS or FAILED. The PatchDocument is an RFC 6902 JSON Patch array against the resource's current state, wrapped in string(...); the same pattern updates any mutable property of any AWS resource exposed through Cloud Control. RetentionInDays accepts only the discrete values CloudWatch Logs supports (1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653); other values fail the update.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/logs/log-group-retention-update"
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/logs/log-group-retention-update",
+  "last_verified": "2026-07-29"
 }

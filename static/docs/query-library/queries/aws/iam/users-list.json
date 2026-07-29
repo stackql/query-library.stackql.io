@@ -1,12 +1,12 @@
 {
   "id": "aws/iam/users-list",
   "title": "IAM users enumeration",
-  "description": "Enumerates IAM user names in the account; IAM is global, the region only routes the call.",
+  "description": "Enumerates IAM users in the account; IAM is global and always served from us-east-1, so the query takes no parameters.",
   "mutation": false,
   "verb": "select",
-  "status": "draft",
+  "status": "stable",
   "providers": [
-    "aws"
+    "awscc"
   ],
   "services": [
     "iam"
@@ -16,19 +16,10 @@
     "AWS_SECRET_ACCESS_KEY"
   ],
   "permissions": [
-    "cloudcontrol:ListResources",
+    "cloudformation:ListResources",
     "iam:ListUsers"
   ],
-  "params": [
-    {
-      "name": "region",
-      "type": "identifier",
-      "required": false,
-      "default": "us-east-1",
-      "description": "Routing region; IAM is a global service",
-      "example": "us-east-1"
-    }
-  ],
+  "params": [],
   "outputs": [
     {
       "name": "user_name",
@@ -40,7 +31,10 @@
     "fan_out": "none",
     "expensive": false
   },
-  "template": "SELECT user_name, region FROM aws.iam.users_list_only WHERE region = '{{region}}';",
-  "notes": "For per-user detail (ARN, creation date, path) read aws.iam.users with data__Identifier set to the user name, one request per user. Related list-only resources in the same service cover roles (aws.iam.roles_list_only) and groups (aws.iam.groups_list_only) with the same shape.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/iam/users-list"
+  "template": "SELECT user_name\nFROM awscc.iam.users_list_only\nWHERE region = 'us-east-1';",
+  "notes": "IAM is global: region = 'us-east-1' is endpoint routing, never a filter, and applies to every IAM query. The template is the cheap identifier-only path via Cloud Control, requiring cloudformation:ListResources plus iam:ListUsers; the native variation requires only iam:ListUsers and returns ARN, user id, creation date, password_last_used and path in one call. password_last_used is the string null for users who have never signed in with a console password. Sibling list-only resources with the same shape cover roles (awscc.iam.roles_list_only) and groups (awscc.iam.groups_list_only).",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/iam/users-list",
+  "last_verified": "2026-07-29",
+  "author": "Jeffrey Aven",
+  "author_company": "StackQL Studios"
 }

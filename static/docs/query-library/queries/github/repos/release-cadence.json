@@ -1,0 +1,78 @@
+{
+  "id": "github/repos/release-cadence",
+  "title": "GitHub release cadence and gaps",
+  "description": "Lists a repository's releases with the previous and next tag alongside the interval between them; the shipping rhythm and release drought view.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "github"
+  ],
+  "services": [
+    "repos"
+  ],
+  "auth": [
+    "STACKQL_GITHUB_USERNAME",
+    "STACKQL_GITHUB_PASSWORD"
+  ],
+  "params": [
+    {
+      "name": "owner",
+      "type": "identifier",
+      "required": true,
+      "description": "Repository owner (organization or user)",
+      "example": "stackql"
+    },
+    {
+      "name": "repo",
+      "type": "identifier",
+      "required": true,
+      "description": "Repository name",
+      "example": "stackql"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "tag_name",
+      "type": "string",
+      "description": "Release tag"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "description": "Release title"
+    },
+    {
+      "name": "published_at",
+      "type": "string",
+      "description": "Publication timestamp"
+    },
+    {
+      "name": "previous_release",
+      "type": "string",
+      "description": "Tag of the preceding release, null for the earliest"
+    },
+    {
+      "name": "next_release",
+      "type": "string",
+      "description": "Tag of the following release, null for the latest"
+    },
+    {
+      "name": "days_since_last_release",
+      "type": "number",
+      "description": "Interval in days since the preceding release"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false
+  },
+  "related": [
+    "github/repos/commit-activity-trend",
+    "github/repos/contributor-analytics"
+  ],
+  "template": "SELECT\ntag_name,\nname,\npublished_at,\nLAG(tag_name, 1) OVER (ORDER BY published_at) as previous_release,\nLEAD(tag_name, 1) OVER (ORDER BY published_at) as next_release,\nROUND(julianday(published_at) - julianday(LAG(published_at, 1) OVER (ORDER BY published_at)), 1) as days_since_last_release\nFROM github.repos.releases\nWHERE owner = '{{owner}}'\nAND repo = '{{repo}}'\nORDER BY published_at DESC;",
+  "notes": "days_since_last_release is null on the earliest release and next_release is null on the latest, which is the expected boundary behaviour of LAG and LEAD rather than missing data. Ordering is by published_at, not by tag name - semantic version ordering would need parsing and does not always match publication order, particularly where patch releases on an older line ship after a newer minor. A value of 0 means two releases published on the same day, which is common where a release is immediately superseded by a fix. Draft releases are excluded by the API; pre-releases are included and carry the prerelease flag, so filter on it if the cadence question is about stable releases only. julianday date arithmetic is the embedded SQLite backend's dialect.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/github/repos/release-cadence",
+  "last_verified": "2026-07-29"
+}

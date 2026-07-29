@@ -1,10 +1,10 @@
 {
   "id": "aws/lambda/functions-list",
   "title": "Lambda functions in a region",
-  "description": "Enumerates Lambda function names in one region via the list-only resource.",
+  "description": "Lists Lambda functions in one region with runtime, architecture, memory, timeout and execution role in a single call.",
   "mutation": false,
   "verb": "select",
-  "status": "draft",
+  "status": "stable",
   "providers": [
     "aws"
   ],
@@ -16,7 +16,6 @@
     "AWS_SECRET_ACCESS_KEY"
   ],
   "permissions": [
-    "cloudcontrol:ListResources",
     "lambda:ListFunctions"
   ],
   "params": [
@@ -32,12 +31,47 @@
     {
       "name": "function_name",
       "type": "string",
-      "description": "Lambda function name"
+      "description": "Function name"
     },
     {
-      "name": "region",
+      "name": "runtime",
       "type": "string",
-      "description": "Region the function is deployed in"
+      "description": "Managed runtime identifier, e.g. python3.12; null for container image functions"
+    },
+    {
+      "name": "architecture",
+      "type": "string",
+      "description": "x86_64 or arm64"
+    },
+    {
+      "name": "memory_size",
+      "type": "number",
+      "description": "Memory allocation in MB, which also determines CPU share"
+    },
+    {
+      "name": "timeout",
+      "type": "number",
+      "description": "Maximum execution time in seconds"
+    },
+    {
+      "name": "package_type",
+      "type": "string",
+      "description": "Zip or Image"
+    },
+    {
+      "name": "code_size",
+      "type": "number",
+      "description": "Deployment package size in bytes"
+    },
+    {
+      "name": "last_modified",
+      "type": "string",
+      "description": "Last update timestamp"
+    },
+    {
+      "name": "role",
+      "type": "string",
+      "description": "Execution role ARN"
     }
   ],
   "cost": {
@@ -46,9 +80,12 @@
     "notes": "One list call per region when swept account-wide"
   },
   "related": [
+    "aws/lambda/function-analytics",
+    "aws/lambda/public-access-policies",
     "aws/ec2/regions-enabled"
   ],
-  "template": "SELECT function_name, region FROM aws.lambda.functions_list_only WHERE region = '{{region}}';",
-  "notes": "Lambda is regional: fan out over the enabled regions from aws/ec2/regions-enabled for an account-wide inventory. For configuration detail, read aws.lambda.functions with data__Identifier set to the function name, one request per function.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/lambda/functions-list"
+  "template": "SELECT\nfunction_name,\nruntime,\njson_extract(architectures, '$[0]') as architecture,\nmemory_size,\ntimeout,\npackage_type,\ncode_size,\nlast_modified,\nrole\nFROM aws.lambda.functions\nWHERE region = '{{region}}';",
+  "notes": "The same resource serves two operations: region alone lists every function with full configuration, while adding function_name routes to GetFunction and returns a different column set (code, configuration, concurrency, tags), so a projection valid for one form fails against the other. architectures is a JSON array - functions declare exactly one architecture today, so element 0 is the value. runtime is null for container image functions, where package_type is Image and the runtime lives in the image itself. memory_size determines CPU allocation as well as memory. The awscc list-only variation needs cloudformation:ListResources in addition to the Lambda action.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/lambda/functions-list",
+  "last_verified": "2026-07-29"
 }

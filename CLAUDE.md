@@ -126,9 +126,12 @@ easy to get wrong:
   `Microsoft.Compute/virtualMachines/read`, `compute.instances.list`) and
   must list only what the template's wire calls require. Omit the field when
   unsure - agents relay it verbatim as 403 remediation, so a wrong list is
-  worse than none. AWS entries backed by Cloud Control (methods like
-  `create_resource`, `data__Identifier` keys) need `cloudcontrol:ListResources`
-  or `cloudcontrol:GetResource` plus the underlying service actions.
+  worse than none. AWS entries backed by Cloud Control (the `awscc` provider)
+  need the `cloudformation:*` action for the wire call
+  (`cloudformation:ListResources`, `cloudformation:GetResource`,
+  `cloudformation:UpdateResource`, ...) plus the underlying service actions -
+  Cloud Control API authorizes under the `cloudformation:` prefix; there is
+  no `cloudcontrol:` IAM prefix.
 - Write `intent_keywords` as user asks, not as descriptions ("list all s3
   buckets", not "s3 bucket enumeration").
 

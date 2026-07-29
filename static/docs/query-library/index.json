@@ -1,5 +1,5 @@
 {
-  "build_id": "ql-12708c8552907f46",
+  "build_id": "ql-8d8d8adb73d86ce4",
   "entries": [
     {
       "id": "aws/cloud_control/resource-request-by-token",
@@ -74,9 +74,49 @@
       ]
     },
     {
-      "id": "aws/ec2/instance-stop",
-      "title": "Stop an EC2 instance",
-      "description": "Stops one EC2 instance by instance id via the native stop lifecycle operation.",
+      "id": "aws/ec2/instance-create",
+      "title": "Launch an EC2 instance",
+      "description": "Launches an EC2 instance through Cloud Control, returning a progress event to poll; user data must be base64 encoded.",
+      "providers": [
+        "awscc"
+      ],
+      "services": [
+        "ec2"
+      ],
+      "tags": [
+        "aws",
+        "ec2",
+        "compute",
+        "provisioning",
+        "mutation"
+      ],
+      "keywords": [
+        "launch instance",
+        "run instances",
+        "create vm",
+        "provision ec2"
+      ],
+      "intent_keywords": [
+        "launch an ec2 instance",
+        "create a new vm in aws",
+        "provision an ec2 instance"
+      ],
+      "mutation": true,
+      "verb": "mutation",
+      "status": "draft",
+      "required_params": [
+        "region",
+        "image_id",
+        "instance_type",
+        "subnet_id",
+        "user_data",
+        "tags"
+      ]
+    },
+    {
+      "id": "aws/ec2/instance-state-management",
+      "title": "EC2 instance state and lifecycle control",
+      "description": "Reports instance state and health checks for a region, and covers the stop and start lifecycle operations that change it.",
       "providers": [
         "aws"
       ],
@@ -87,24 +127,66 @@
         "aws",
         "ec2",
         "compute",
-        "lifecycle"
+        "lifecycle",
+        "operations"
       ],
       "keywords": [
+        "instance state",
+        "status checks",
         "stop instance",
-        "shut down vm",
+        "start instance",
         "power off"
       ],
       "intent_keywords": [
+        "what state are my ec2 instances in",
         "stop an ec2 instance",
-        "shut down an instance",
-        "power off ec2"
+        "start an ec2 instance",
+        "check instance status checks"
       ],
-      "mutation": true,
-      "verb": "lifecycle",
-      "status": "draft",
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "region"
+      ]
+    },
+    {
+      "id": "aws/ec2/instance-types-lookup",
+      "title": "EC2 instance type specifications",
+      "description": "Looks up vCPU, memory, architecture and capability details for named EC2 instance types; the architecture check before launching an instance.",
+      "providers": [
+        "aws"
+      ],
+      "services": [
+        "ec2"
+      ],
+      "tags": [
+        "aws",
+        "ec2",
+        "compute",
+        "sizing",
+        "reference"
+      ],
+      "keywords": [
+        "instance type specs",
+        "vcpus",
+        "memory",
+        "architecture",
+        "arm64",
+        "graviton",
+        "sizing"
+      ],
+      "intent_keywords": [
+        "what are the specs of an instance type",
+        "how much memory does an instance type have",
+        "is this instance type arm64 or x86"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
       "required_params": [
         "region",
-        "instance_id"
+        "instance_type"
       ]
     },
     {
@@ -115,8 +197,7 @@
         "aws"
       ],
       "services": [
-        "ec2",
-        "ec2_native"
+        "ec2"
       ],
       "tags": [
         "aws",
@@ -136,7 +217,7 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": [
         "region"
       ]
@@ -144,7 +225,7 @@
     {
       "id": "aws/ec2/regions-enabled",
       "title": "Enabled AWS regions",
-      "description": "Lists AWS regions with their opt-in status; exclude not-opted-in regions from sweeps.",
+      "description": "Lists the AWS regions enabled for the account with endpoint, country and opt-in status; the valid fan-out list for region-swept queries.",
       "providers": [
         "aws"
       ],
@@ -160,7 +241,8 @@
       "keywords": [
         "enabled regions",
         "region sweep",
-        "opt-in status"
+        "opt-in status",
+        "all regions"
       ],
       "intent_keywords": [
         "list enabled aws regions",
@@ -173,11 +255,187 @@
       "required_params": []
     },
     {
-      "id": "aws/iam/users-list",
-      "title": "IAM users enumeration",
-      "description": "Enumerates IAM user names in the account; IAM is global, the region only routes the call.",
+      "id": "aws/iam/access-keys-age",
+      "title": "IAM access key age and rotation status",
+      "description": "Lists a user's access keys with their age in days; keys older than the rotation window are the finding.",
       "providers": [
         "aws"
+      ],
+      "services": [
+        "iam"
+      ],
+      "tags": [
+        "aws",
+        "iam",
+        "security",
+        "cspm",
+        "credentials",
+        "identity"
+      ],
+      "keywords": [
+        "access key age",
+        "key rotation",
+        "stale credentials",
+        "never rotated"
+      ],
+      "intent_keywords": [
+        "find access keys older than 90 days",
+        "which access keys need rotating",
+        "stale iam access keys"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "user_name"
+      ]
+    },
+    {
+      "id": "aws/iam/identity-providers",
+      "title": "IAM federated identity providers",
+      "description": "Inventories the SAML and OIDC identity providers registered in the account; the trusted federation surface behind assumable roles.",
+      "providers": [
+        "aws"
+      ],
+      "services": [
+        "iam"
+      ],
+      "tags": [
+        "aws",
+        "iam",
+        "security",
+        "identity",
+        "federation",
+        "inventory"
+      ],
+      "keywords": [
+        "identity provider",
+        "saml",
+        "oidc",
+        "federation",
+        "sso",
+        "workload identity"
+      ],
+      "intent_keywords": [
+        "list federated identity providers",
+        "what identity providers are trusted",
+        "saml and oidc providers in aws"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": []
+    },
+    {
+      "id": "aws/iam/password-policy-cis",
+      "title": "IAM account password policy vs CIS benchmark",
+      "description": "Assesses the IAM account password policy against CIS AWS Foundations Benchmark password controls, returning raw values and per-control PASS/FAIL verdicts.",
+      "providers": [
+        "aws"
+      ],
+      "services": [
+        "iam"
+      ],
+      "tags": [
+        "aws",
+        "iam",
+        "security",
+        "cspm",
+        "compliance",
+        "cis"
+      ],
+      "keywords": [
+        "password policy",
+        "cis benchmark",
+        "account security posture",
+        "compliance audit"
+      ],
+      "intent_keywords": [
+        "check iam password policy against cis",
+        "is the aws password policy compliant",
+        "audit account password policy"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": []
+    },
+    {
+      "id": "aws/iam/roles-external-trust",
+      "title": "IAM roles trusting external accounts",
+      "description": "Lists IAM roles whose trust policy admits principals from other AWS accounts, flagging external id and federation use; the cross-account exposure surface.",
+      "providers": [
+        "aws"
+      ],
+      "services": [
+        "iam"
+      ],
+      "tags": [
+        "aws",
+        "iam",
+        "security",
+        "cspm",
+        "identity",
+        "trust"
+      ],
+      "keywords": [
+        "cross account trust",
+        "assume role policy",
+        "external principal",
+        "confused deputy"
+      ],
+      "intent_keywords": [
+        "which roles can be assumed by other accounts",
+        "find cross account trust relationships",
+        "external principals in role trust policies"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "account_id"
+      ]
+    },
+    {
+      "id": "aws/iam/users-console-no-mfa",
+      "title": "IAM users with console access and no MFA",
+      "description": "Lists IAM users alongside whether they have a virtual MFA device registered; console-capable users without MFA are the finding.",
+      "providers": [
+        "aws"
+      ],
+      "services": [
+        "iam"
+      ],
+      "tags": [
+        "aws",
+        "iam",
+        "security",
+        "cspm",
+        "mfa",
+        "identity"
+      ],
+      "keywords": [
+        "mfa",
+        "console access",
+        "unprotected users",
+        "multi factor"
+      ],
+      "intent_keywords": [
+        "which iam users have no mfa",
+        "find users without multi factor authentication",
+        "console users missing mfa"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": []
+    },
+    {
+      "id": "aws/iam/users-list",
+      "title": "IAM users enumeration",
+      "description": "Enumerates IAM users in the account; IAM is global and always served from us-east-1, so the query takes no parameters.",
+      "providers": [
+        "awscc"
       ],
       "services": [
         "iam"
@@ -201,13 +459,49 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": []
+    },
+    {
+      "id": "aws/lambda/function-analytics",
+      "title": "Lambda fleet analytics by runtime and architecture",
+      "description": "Summarises a region's Lambda functions by runtime and architecture with counts and memory totals; the runtime modernisation and Graviton migration view.",
+      "providers": [
+        "aws"
+      ],
+      "services": [
+        "lambda"
+      ],
+      "tags": [
+        "aws",
+        "lambda",
+        "serverless",
+        "analytics",
+        "inventory"
+      ],
+      "keywords": [
+        "runtime summary",
+        "graviton migration",
+        "deprecated runtime",
+        "fleet profile",
+        "arm64"
+      ],
+      "intent_keywords": [
+        "what runtimes are my lambdas using",
+        "summarise my lambda functions",
+        "how many lambdas are on arm64"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "region"
+      ]
     },
     {
       "id": "aws/lambda/functions-list",
       "title": "Lambda functions in a region",
-      "description": "Enumerates Lambda function names in one region via the list-only resource.",
+      "description": "Lists Lambda functions in one region with runtime, architecture, memory, timeout and execution role in a single call.",
       "providers": [
         "aws"
       ],
@@ -223,7 +517,8 @@
       "keywords": [
         "function list",
         "lambda inventory",
-        "serverless functions"
+        "serverless functions",
+        "runtime"
       ],
       "intent_keywords": [
         "list lambda functions",
@@ -232,9 +527,46 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": [
         "region"
+      ]
+    },
+    {
+      "id": "aws/lambda/public-access-policies",
+      "title": "Lambda functions with public resource policies",
+      "description": "Reads a Lambda function's resource policy and flags statements granting invoke rights to a wildcard principal; the public-invoke exposure check.",
+      "providers": [
+        "aws"
+      ],
+      "services": [
+        "lambda"
+      ],
+      "tags": [
+        "aws",
+        "lambda",
+        "security",
+        "cspm",
+        "serverless"
+      ],
+      "keywords": [
+        "resource policy",
+        "public lambda",
+        "wildcard principal",
+        "invoke permission",
+        "function url"
+      ],
+      "intent_keywords": [
+        "which lambda functions are public",
+        "lambda resource policy allowing star principal",
+        "can anyone invoke my lambda"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "draft",
+      "required_params": [
+        "region",
+        "function_name"
       ]
     },
     {
@@ -276,9 +608,9 @@
     {
       "id": "aws/s3/bucket-detail",
       "title": "S3 bucket security detail",
-      "description": "Full security attributes for one bucket: public access block, encryption, versioning, ownership.",
+      "description": "Full security configuration for one bucket: public access block, encryption, versioning, ownership controls and logging.",
       "providers": [
-        "aws"
+        "awscc"
       ],
       "services": [
         "s3"
@@ -292,7 +624,8 @@
       "keywords": [
         "bucket encryption",
         "public access block",
-        "bucket versioning"
+        "bucket versioning",
+        "object ownership"
       ],
       "intent_keywords": [
         "is my bucket public",
@@ -310,7 +643,7 @@
     {
       "id": "aws/s3/buckets-list",
       "title": "S3 buckets cheap enumeration",
-      "description": "Enumerates S3 bucket names and regions via the list-only resource; identifiers only, no detail.",
+      "description": "Enumerates every S3 bucket in the account with its ARN, home region and creation date in one account-global call.",
       "providers": [
         "aws"
       ],
@@ -326,7 +659,8 @@
       "keywords": [
         "bucket list",
         "s3 inventory",
-        "list buckets"
+        "list buckets",
+        "bucket region"
       ],
       "intent_keywords": [
         "list all s3 buckets",
@@ -336,8 +670,43 @@
       "mutation": false,
       "verb": "select",
       "status": "stable",
+      "required_params": []
+    },
+    {
+      "id": "aws/s3/public-access-audit",
+      "title": "S3 bucket public access block audit",
+      "description": "Reports the four block-public-access settings plus object ownership for a bucket; any flag returning 0 leaves a public exposure path open.",
+      "providers": [
+        "awscc"
+      ],
+      "services": [
+        "s3"
+      ],
+      "tags": [
+        "aws",
+        "s3",
+        "security",
+        "cspm",
+        "storage"
+      ],
+      "keywords": [
+        "public bucket",
+        "block public access",
+        "public acl",
+        "bucket policy status",
+        "exposure"
+      ],
+      "intent_keywords": [
+        "which s3 buckets are public",
+        "find buckets with public access block disabled",
+        "s3 buckets with public acls or policies"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
       "required_params": [
-        "region"
+        "region",
+        "bucket_name"
       ]
     },
     {
@@ -537,9 +906,120 @@
       ]
     },
     {
+      "id": "github/issues/issue-velocity",
+      "title": "GitHub issue creation velocity",
+      "description": "Sequences a repository's issues by creation date with a cumulative count and the gap since the previous issue; the intake rate and quiet-period view.",
+      "providers": [
+        "github"
+      ],
+      "services": [
+        "issues"
+      ],
+      "tags": [
+        "github",
+        "issues",
+        "analytics",
+        "velocity",
+        "community"
+      ],
+      "keywords": [
+        "issue velocity",
+        "issue growth",
+        "intake rate",
+        "backlog growth",
+        "time between issues"
+      ],
+      "intent_keywords": [
+        "how fast are issues being raised",
+        "issue growth over time",
+        "gaps between issue reports"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "draft",
+      "required_params": [
+        "owner",
+        "repo"
+      ]
+    },
+    {
+      "id": "github/repos/commit-activity-trend",
+      "title": "GitHub weekly commit activity trend",
+      "description": "Reports the last year of weekly commit counts with a four-week moving average and cumulative total; the project momentum view.",
+      "providers": [
+        "github"
+      ],
+      "services": [
+        "repos"
+      ],
+      "tags": [
+        "github",
+        "repos",
+        "analytics",
+        "activity",
+        "delivery"
+      ],
+      "keywords": [
+        "commit activity",
+        "moving average",
+        "project momentum",
+        "weekly commits",
+        "trend"
+      ],
+      "intent_keywords": [
+        "how active is this repository",
+        "commit trend over time",
+        "weekly commit activity"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "owner",
+        "repo"
+      ]
+    },
+    {
+      "id": "github/repos/contributor-analytics",
+      "title": "GitHub contributor ranking and concentration",
+      "description": "Ranks a repository's contributors by commit count with running totals and share of the whole; the bus-factor and contribution concentration view.",
+      "providers": [
+        "github"
+      ],
+      "services": [
+        "repos"
+      ],
+      "tags": [
+        "github",
+        "repos",
+        "analytics",
+        "contributors",
+        "community"
+      ],
+      "keywords": [
+        "contributor ranking",
+        "bus factor",
+        "contribution concentration",
+        "top contributors",
+        "window functions"
+      ],
+      "intent_keywords": [
+        "who are the top contributors to this repo",
+        "how concentrated are contributions",
+        "rank contributors by commits"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "owner",
+        "repo"
+      ]
+    },
+    {
       "id": "github/repos/org-repos-list",
       "title": "GitHub repositories in an organization",
-      "description": "Lists all repositories in a GitHub organization with visibility, archive state and activity signals.",
+      "description": "Lists all repositories in a GitHub organization with visibility, archive state and activity signals, filtered and sorted server-side.",
       "providers": [
         "github"
       ],
@@ -554,7 +1034,9 @@
       "keywords": [
         "repo list",
         "org repositories",
-        "repository inventory"
+        "repository inventory",
+        "stale repos",
+        "forks"
       ],
       "intent_keywords": [
         "list repos in my github org",
@@ -566,6 +1048,43 @@
       "status": "stable",
       "required_params": [
         "org"
+      ]
+    },
+    {
+      "id": "github/repos/release-cadence",
+      "title": "GitHub release cadence and gaps",
+      "description": "Lists a repository's releases with the previous and next tag alongside the interval between them; the shipping rhythm and release drought view.",
+      "providers": [
+        "github"
+      ],
+      "services": [
+        "repos"
+      ],
+      "tags": [
+        "github",
+        "repos",
+        "analytics",
+        "releases",
+        "delivery"
+      ],
+      "keywords": [
+        "release cadence",
+        "time between releases",
+        "release gap",
+        "shipping frequency",
+        "lag lead"
+      ],
+      "intent_keywords": [
+        "how often does this repo release",
+        "time between releases",
+        "when was the last release"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "owner",
+        "repo"
       ]
     },
     {

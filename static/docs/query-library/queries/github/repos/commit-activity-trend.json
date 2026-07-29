@@ -1,0 +1,69 @@
+{
+  "id": "github/repos/commit-activity-trend",
+  "title": "GitHub weekly commit activity trend",
+  "description": "Reports the last year of weekly commit counts with a four-week moving average and cumulative total; the project momentum view.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "github"
+  ],
+  "services": [
+    "repos"
+  ],
+  "auth": [
+    "STACKQL_GITHUB_USERNAME",
+    "STACKQL_GITHUB_PASSWORD"
+  ],
+  "params": [
+    {
+      "name": "owner",
+      "type": "identifier",
+      "required": true,
+      "description": "Repository owner (organization or user)",
+      "example": "stackql"
+    },
+    {
+      "name": "repo",
+      "type": "identifier",
+      "required": true,
+      "description": "Repository name",
+      "example": "stackql"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "week_starting",
+      "type": "string",
+      "description": "Date the week begins (weeks start Sunday, UTC)"
+    },
+    {
+      "name": "commits",
+      "type": "integer",
+      "description": "Commits in that week"
+    },
+    {
+      "name": "four_week_moving_avg",
+      "type": "number",
+      "description": "Mean weekly commits over this week and the three before it"
+    },
+    {
+      "name": "cumulative_commits",
+      "type": "integer",
+      "description": "Running total across the reported period"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false,
+    "notes": "One call; GitHub computes the statistic asynchronously and may return empty on first request"
+  },
+  "related": [
+    "github/repos/contributor-analytics",
+    "github/repos/release-cadence"
+  ],
+  "template": "SELECT\ndate(week, 'unixepoch') as week_starting,\ntotal as commits,\nROUND(AVG(total) OVER (ORDER BY week ROWS BETWEEN 3 PRECEDING AND CURRENT ROW), 1) as four_week_moving_avg,\nSUM(total) OVER (ORDER BY week) as cumulative_commits\nFROM github.repos.stats_commit_activity\nWHERE owner = '{{owner}}'\nAND repo = '{{repo}}';",
+  "notes": "The resource already exposes a per-week total, so there is no need to sum the days array to get a weekly count - and doing so via JSON_EACH is actively worse here, because a predicate sitting in the same WHERE clause as a table function is dropped, which silently returns an empty result rather than an error. week is a Unix timestamp for the Sunday the week begins; convert it with date(week, 'unixepoch'). The window frame ROWS BETWEEN 3 PRECEDING AND CURRENT ROW gives a trailing four-week mean, and the first three rows average over fewer weeks by design. GitHub computes repository statistics asynchronously and returns an empty body with a 202 on the first request for a cold repository, so an empty result may simply mean the statistic is still being generated - retry before concluding the repository is inactive. The series covers the last year only.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/github/repos/commit-activity-trend",
+  "last_verified": "2026-07-29"
+}

@@ -71,8 +71,11 @@ move a published id.
      list is worse than none, because agents relay it verbatim to operators as
      403 remediation guidance. AWS actions usually mirror the underlying API
      operation (ListUsers -> `iam:ListUsers`); entries that go through Cloud
-     Control need both the `cloudcontrol:*` action and the underlying service
-     actions.
+     Control (the `awscc` provider) need both the `cloudformation:*` action
+     for the wire call (`cloudformation:ListResources`,
+     `cloudformation:GetResource`, `cloudformation:UpdateResource`, ...) and
+     the underlying service actions - Cloud Control API authorizes under the
+     `cloudformation:` prefix.
    - `author` and `author_company` (optional, either or both) credit the
      contributor: they render as a "Contributed by" row on the query page and
      are carried in the emitted JSON. `author` is a personal display name,

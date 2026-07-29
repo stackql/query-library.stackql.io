@@ -1,0 +1,84 @@
+{
+  "id": "aws/s3/public-access-audit",
+  "title": "S3 bucket public access block audit",
+  "description": "Reports the four block-public-access settings plus object ownership for a bucket; any flag returning 0 leaves a public exposure path open.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "awscc"
+  ],
+  "services": [
+    "s3"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "cloudformation:GetResource",
+    "s3:GetBucketPublicAccessBlock",
+    "s3:GetBucketOwnershipControls"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "The bucket's own region, from the enumeration query",
+      "example": "us-east-1"
+    },
+    {
+      "name": "bucket_name",
+      "type": "string",
+      "required": true,
+      "description": "Bucket to audit; iterate the account's buckets for a full sweep",
+      "example": "my-bucket"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "bucket_name",
+      "type": "string",
+      "description": "Bucket name"
+    },
+    {
+      "name": "block_public_acls",
+      "type": "number",
+      "description": "1 when new public ACLs are rejected, 0 when they are allowed"
+    },
+    {
+      "name": "ignore_public_acls",
+      "type": "number",
+      "description": "1 when existing public ACLs are ignored, 0 when they still grant access"
+    },
+    {
+      "name": "block_public_policy",
+      "type": "number",
+      "description": "1 when public bucket policies are rejected, 0 when they are allowed"
+    },
+    {
+      "name": "restrict_public_buckets",
+      "type": "number",
+      "description": "1 when public policy access is restricted to authorised principals"
+    },
+    {
+      "name": "object_ownership",
+      "type": "string",
+      "description": "BucketOwnerEnforced disables ACLs entirely; ObjectWriter and BucketOwnerPreferred leave them active"
+    }
+  ],
+  "cost": {
+    "fan_out": "account",
+    "expensive": true,
+    "notes": "One request per bucket when swept across an account"
+  },
+  "related": [
+    "aws/s3/buckets-list",
+    "aws/s3/bucket-detail"
+  ],
+  "template": "SELECT\nbucket_name,\njson_extract(public_access_block_configuration, '$.BlockPublicAcls') as block_public_acls,\njson_extract(public_access_block_configuration, '$.IgnorePublicAcls') as ignore_public_acls,\njson_extract(public_access_block_configuration, '$.BlockPublicPolicy') as block_public_policy,\njson_extract(public_access_block_configuration, '$.RestrictPublicBuckets') as restrict_public_buckets,\njson_extract(ownership_controls, '$.Rules[0].ObjectOwnership') as object_ownership\nFROM awscc.s3.buckets\nWHERE region = '{{region}}'\nAND Identifier = '{{bucket_name}}';",
+  "notes": "Values arrive as 1 and 0 rather than true and false because json_extract maps JSON booleans to integers. A null public_access_block_configuration means no block configuration exists at all, which is the worst case - every path is open - and is distinct from a configuration with all flags set to 0. The native aws.s3.public_access_blocks resource returns empty rather than the configuration, so this Cloud Control read is the reliable source. The region must be the bucket's own region, available as bucket_region from aws/s3/buckets-list. This checks the account-level and bucket-level block configuration, not whether a public policy or ACL is actually attached: a bucket with blocks disabled is not necessarily public, only capable of becoming so, so confirm with the bucket policy before reporting a bucket as publicly readable. Computed CASE expressions cannot be aliased in a projection over awscc resources, so verdict logic belongs client-side.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/s3/public-access-audit",
+  "last_verified": "2026-07-29"
+}

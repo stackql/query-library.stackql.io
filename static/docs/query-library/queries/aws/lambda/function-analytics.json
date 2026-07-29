@@ -1,0 +1,75 @@
+{
+  "id": "aws/lambda/function-analytics",
+  "title": "Lambda fleet analytics by runtime and architecture",
+  "description": "Summarises a region's Lambda functions by runtime and architecture with counts and memory totals; the runtime modernisation and Graviton migration view.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "aws"
+  ],
+  "services": [
+    "lambda"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "lambda:ListFunctions"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Region to summarise",
+      "example": "us-east-1"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "runtime",
+      "type": "string",
+      "description": "Managed runtime identifier; null for container image functions"
+    },
+    {
+      "name": "architecture",
+      "type": "string",
+      "description": "x86_64 or arm64"
+    },
+    {
+      "name": "function_count",
+      "type": "number",
+      "description": "Number of functions on that runtime and architecture"
+    },
+    {
+      "name": "total_memory_mb",
+      "type": "number",
+      "description": "Sum of configured memory across those functions"
+    },
+    {
+      "name": "avg_memory_mb",
+      "type": "number",
+      "description": "Mean configured memory"
+    },
+    {
+      "name": "max_timeout_seconds",
+      "type": "number",
+      "description": "Longest configured timeout in the group"
+    }
+  ],
+  "cost": {
+    "fan_out": "region",
+    "expensive": false,
+    "notes": "One list call per region when swept account-wide"
+  },
+  "related": [
+    "aws/lambda/functions-list",
+    "aws/lambda/public-access-policies"
+  ],
+  "template": "SELECT\nruntime,\narchitecture,\ncount(*) as function_count,\nsum(memory_size) as total_memory_mb,\navg(memory_size) as avg_memory_mb,\nmax(timeout) as max_timeout_seconds\nFROM (\nSELECT\nruntime,\njson_extract(architectures, '$[0]') as architecture,\nmemory_size + 0 as memory_size,\ntimeout + 0 as timeout\nFROM aws.lambda.functions\nWHERE region = '{{region}}'\n) t\nGROUP BY runtime, architecture\nORDER BY count(*) DESC;",
+  "notes": "The aggregation runs client-side over the list response, so it costs one API call regardless of fleet size. The numeric columns need the + 0 coercion in the subquery: memory_size and timeout arrive as text, and without it sum and avg produce zero and comparisons order lexicographically. ORDER BY must repeat the aggregate expression rather than reference its alias - ORDER BY count(*) DESC works where ORDER BY function_count DESC fails with a no such column error. Check the runtime values returned against the AWS Lambda runtime deprecation calendar rather than a hardcoded list - deprecation dates move and each runtime retires on its own schedule. A null runtime with package_type Image is a container image function, which is not subject to managed runtime deprecation but carries its own base image patching obligation. Rank remediation by function_count, then by total_memory_mb as a rough proxy for spend.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/lambda/function-analytics",
+  "last_verified": "2026-07-29"
+}

@@ -1,0 +1,46 @@
+{
+  "id": "aws/iam/identity-providers",
+  "title": "IAM federated identity providers",
+  "description": "Inventories the SAML and OIDC identity providers registered in the account; the trusted federation surface behind assumable roles.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "aws"
+  ],
+  "services": [
+    "iam"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "iam:ListOpenIDConnectProviders",
+    "iam:ListSAMLProviders"
+  ],
+  "params": [],
+  "outputs": [
+    {
+      "name": "arn",
+      "type": "string",
+      "description": "Provider ARN; the last path segment is the issuer for OIDC or the provider name for SAML"
+    },
+    {
+      "name": "provider_type",
+      "type": "string",
+      "description": "oidc or saml"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false
+  },
+  "related": [
+    "aws/iam/roles-external-trust"
+  ],
+  "template": "SELECT arn, 'oidc' as provider_type\nFROM aws.iam.open_id_connect_providers\nWHERE region = 'us-east-1'\nUNION ALL\nSELECT arn, 'saml' as provider_type\nFROM aws.iam.saml_providers\nWHERE region = 'us-east-1';",
+  "notes": "OIDC providers are typically CI/CD and workload federation (an ARN ending in token.actions.githubusercontent.com is GitHub Actions); SAML providers are typically workforce SSO. Which roles each provider can reach comes from the role trust policies - see aws/iam/roles-external-trust, whose trusts_oidc_federation and trusts_saml_federation flags mark the roles involved. Note that roles assumed through AWS IAM Identity Center (SSO) do not appear here: Identity Center manages its own provider and provisions roles with a path of /aws-reserved/. An empty result means no federation is configured and all access is via IAM principals. IAM is global, so region = 'us-east-1' is endpoint routing.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/iam/identity-providers",
+  "last_verified": "2026-07-29"
+}

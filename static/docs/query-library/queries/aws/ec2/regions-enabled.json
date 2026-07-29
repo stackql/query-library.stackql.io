@@ -1,7 +1,7 @@
 {
   "id": "aws/ec2/regions-enabled",
   "title": "Enabled AWS regions",
-  "description": "Lists AWS regions with their opt-in status; exclude not-opted-in regions from sweeps.",
+  "description": "Lists the AWS regions enabled for the account with endpoint, country and opt-in status; the valid fan-out list for region-swept queries.",
   "mutation": false,
   "verb": "select",
   "status": "stable",
@@ -30,21 +30,32 @@
   ],
   "outputs": [
     {
-      "name": "regionName",
+      "name": "endpoint",
       "type": "string",
-      "description": "Region identifier"
+      "description": "EC2 service endpoint for the region"
     },
     {
-      "name": "optInStatus",
+      "name": "country",
+      "type": "string",
+      "description": "Country name extracted from the geography object"
+    },
+    {
+      "name": "opt_in_status",
       "type": "string",
       "description": "opt-in-not-required, opted-in or not-opted-in"
+    },
+    {
+      "name": "region_name",
+      "type": "string",
+      "description": "Region identifier"
     }
   ],
   "cost": {
     "fan_out": "none",
     "expensive": false
   },
-  "template": "SELECT regionName, optInStatus FROM aws.ec2_native.regions WHERE region = '{{seed_region}}';",
-  "notes": "region is a routing parameter, not a filter. Exclude rows with optInStatus = 'not-opted-in' before fanning out with WHERE region IN (...).",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/regions-enabled"
+  "template": "SELECT\nendpoint,\nJSON_EXTRACT(geography, '$.item.name') as country,\nopt_in_status,\nregion_name\nFROM aws.ec2.regions\nWHERE region = '{{seed_region}}';",
+  "notes": "region is a routing parameter, not a filter: the call is account-global and any enabled region answers for all of them. The default result contains only regions enabled for the account (opt_in_status opt-in-not-required or opted-in), so no client-side exclusion is needed before fanning out with WHERE region IN (...). With all_regions = true the result adds not-opted-in regions. geography is a JSON object; extract the country with JSON_EXTRACT(geography, '$.item.name') on the default SQLite backend or json_extract_path_text(geography::json, 'item', 'name') on PostgreSQL.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/regions-enabled",
+  "last_verified": "2026-07-29"
 }

@@ -1,0 +1,75 @@
+{
+  "id": "aws/iam/roles-external-trust",
+  "title": "IAM roles trusting external accounts",
+  "description": "Lists IAM roles whose trust policy admits principals from other AWS accounts, flagging external id and federation use; the cross-account exposure surface.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "aws"
+  ],
+  "services": [
+    "iam"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "iam:ListRoles"
+  ],
+  "params": [
+    {
+      "name": "account_id",
+      "type": "string",
+      "required": true,
+      "description": "This account's 12-digit id; principals from any other account are treated as external",
+      "example": "123456789012",
+      "pattern": "^[0-9]{12}$"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "role_name",
+      "type": "string",
+      "description": "Role name"
+    },
+    {
+      "name": "create_date",
+      "type": "string",
+      "description": "Role creation date"
+    },
+    {
+      "name": "requires_external_id",
+      "type": "string",
+      "description": "true when the trust policy conditions on sts:ExternalId"
+    },
+    {
+      "name": "trusts_oidc_federation",
+      "type": "string",
+      "description": "true when the trust policy admits an OIDC identity provider"
+    },
+    {
+      "name": "trusts_saml_federation",
+      "type": "string",
+      "description": "true when the trust policy admits a SAML identity provider"
+    },
+    {
+      "name": "assume_role_policy_document",
+      "type": "string",
+      "description": "URL-encoded trust policy; decode to read the exact principals"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false
+  },
+  "related": [
+    "aws/iam/identity-providers",
+    "aws/iam/users-list"
+  ],
+  "template": "SELECT\nrole_name,\ncreate_date,\nCASE WHEN instr(assume_role_policy_document, 'sts%3AExternalId') > 0 THEN 'true' ELSE 'false' END as requires_external_id,\nCASE WHEN instr(assume_role_policy_document, 'oidc-provider') > 0 THEN 'true' ELSE 'false' END as trusts_oidc_federation,\nCASE WHEN instr(assume_role_policy_document, 'saml-provider') > 0 THEN 'true' ELSE 'false' END as trusts_saml_federation,\nassume_role_policy_document\nFROM aws.iam.roles\nWHERE region = 'us-east-1'\nAND instr(REPLACE(assume_role_policy_document, 'iam%3A%3A{{account_id}}', ''), 'iam%3A%3A') > 0;",
+  "notes": "assume_role_policy_document is URL-encoded, so the matching works on encoded text: iam%3A%3A is iam::, and the REPLACE strips this account's own ARNs before looking for any remaining account reference. Decode the document to read exact principals. A cross-account role without requires_external_id is the confused-deputy exposure worth prioritising, particularly for vendor integrations - third-party access should always be conditioned on an external id. Roles trusting federation (trusts_oidc_federation or trusts_saml_federation true) admit workloads or workforce identities from a registered identity provider rather than an account principal; inventory those providers with aws/iam/identity-providers. IAM is global, so region = 'us-east-1' is endpoint routing.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/iam/roles-external-trust",
+  "last_verified": "2026-07-29"
+}

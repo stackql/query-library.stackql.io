@@ -57,6 +57,7 @@ cost:
 related:
   - aws/cloud_control/resource-requests-by-status
   - aws/logs/log-group-retention-update
+last_verified: "2026-07-29"
 ---
 
 Gets the current progress event for a single Cloud Control resource request.

@@ -88,5 +88,6 @@
   ],
   "template": "SELECT Identifier, Operation, OperationStatus, StatusMessage, ErrorCode, RetryAfter, ResourceModel, TypeName, EventTime\nFROM awscc.cloud_control.resource_request\nWHERE RequestToken = '{{request_token}}'\nAND region = '{{region}}';",
   "notes": "Poll until OperationStatus is SUCCESS or FAILED; RetryAfter suggests how long to wait between polls. On failure, StatusMessage and ErrorCode carry the reason. On success, ResourceModel carries the resulting resource state, or re-read the resource directly. An unknown or expired token fails the request - completed requests age out of the service's history.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/cloud_control/resource-request-by-token"
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/cloud_control/resource-request-by-token",
+  "last_verified": "2026-07-29"
 }

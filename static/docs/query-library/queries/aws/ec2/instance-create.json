@@ -1,0 +1,136 @@
+{
+  "id": "aws/ec2/instance-create",
+  "title": "Launch an EC2 instance",
+  "description": "Launches an EC2 instance through Cloud Control, returning a progress event to poll; user data must be base64 encoded.",
+  "mutation": true,
+  "verb": "mutation",
+  "status": "draft",
+  "providers": [
+    "awscc"
+  ],
+  "services": [
+    "ec2"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "cloudformation:CreateResource",
+    "ec2:RunInstances",
+    "ec2:CreateTags",
+    "ec2:DescribeInstances"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Region to launch in",
+      "example": "ap-southeast-2"
+    },
+    {
+      "name": "image_id",
+      "type": "string",
+      "required": true,
+      "description": "AMI id; must match the instance type's architecture",
+      "example": "ami-0f707e657d81da75d",
+      "pattern": "^ami-[0-9a-f]{8,17}$"
+    },
+    {
+      "name": "instance_type",
+      "type": "string",
+      "required": true,
+      "description": "Instance type; must match the AMI architecture (t4g is arm64, t3 is x86_64)",
+      "example": "t4g.nano"
+    },
+    {
+      "name": "subnet_id",
+      "type": "string",
+      "required": true,
+      "description": "Subnet to launch into; determines the VPC and availability zone",
+      "example": "subnet-05b4d1c749abd4f1b",
+      "pattern": "^subnet-[0-9a-f]{8,17}$"
+    },
+    {
+      "name": "user_data",
+      "type": "string",
+      "required": true,
+      "description": "Base64-encoded boot script; encode before templating, never pass plain text",
+      "example": "IyEvYmluL2Jhc2gKZWNobyBoZWxsbwo="
+    },
+    {
+      "name": "tags",
+      "type": "string",
+      "required": true,
+      "description": "JSON array of Key/Value objects",
+      "example": "[{\"Key\":\"Name\",\"Value\":\"my-instance\"}]"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Identifier",
+      "type": "string",
+      "description": "Instance id; populated when eagerly assigned, otherwise null until the request succeeds"
+    },
+    {
+      "name": "OperationStatus",
+      "type": "string",
+      "description": "IN_PROGRESS, SUCCESS, FAILED, PENDING or CANCEL states"
+    },
+    {
+      "name": "RequestToken",
+      "type": "string",
+      "description": "Token to poll the request with"
+    },
+    {
+      "name": "ErrorCode",
+      "type": "string",
+      "description": "Failure code when the operation fails, empty otherwise"
+    },
+    {
+      "name": "StatusMessage",
+      "type": "string",
+      "description": "Human-readable progress or failure detail"
+    },
+    {
+      "name": "ResourceModel",
+      "type": "string",
+      "description": "Resource state on completion"
+    },
+    {
+      "name": "RetryAfter",
+      "type": "string",
+      "description": "Suggested wait before polling again"
+    },
+    {
+      "name": "EventTime",
+      "type": "string",
+      "description": "Timestamp of the progress event"
+    },
+    {
+      "name": "Operation",
+      "type": "string",
+      "description": "CREATE for this request"
+    },
+    {
+      "name": "TypeName",
+      "type": "string",
+      "description": "AWS::EC2::Instance"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": true,
+    "notes": "Launches billable compute; the instance runs until stopped or terminated"
+  },
+  "related": [
+    "aws/ec2/instance-state-management",
+    "aws/ec2/instance-types-lookup",
+    "aws/cloud_control/resource-request-by-token",
+    "aws/ec2/instances-by-region"
+  ],
+  "template": "INSERT INTO awscc.ec2.instances (\n  ImageId,\n  InstanceType,\n  SubnetId,\n  UserData,\n  Tags,\n  region\n)\nSELECT\n  '{{image_id}}',\n  '{{instance_type}}',\n  '{{subnet_id}}',\n  '{{user_data}}',\n  '{{tags}}',\n  '{{region}}'\nRETURNING\n  ErrorCode,\n  EventTime,\n  Identifier,\n  Operation,\n  OperationStatus,\n  RequestToken,\n  ResourceModel,\n  RetryAfter,\n  StatusMessage,\n  TypeName;",
+  "notes": "UserData must be base64 encoded before it reaches the query - AWS does not encode it for you, and a plain-text script is accepted silently but never runs. The AMI architecture must match the instance type: t4g and other Graviton types need an arm64 AMI, t3 and m5 need x86_64, and a mismatch fails the launch - confirm a type's architecture with aws/ec2/instance-types-lookup before launching. Cloud Control assigns Identifier eagerly for some resource types and lazily for others: when the returned Identifier is non-null it is the instance id, and when it is null the id only becomes available once the request reaches SUCCESS, so poll aws/cloud_control/resource-request-by-token with the RequestToken and read Identifier from the terminal progress event. On the native provider the input properties are singular where the AWS API is plural - TagSpecification, SecurityGroupId, BlockDeviceMapping, NetworkInterface - which is a common source of unknown-column errors. Terminate with DELETE FROM awscc.ec2.instances WHERE region = '<region>' AND Identifier = '<instance_id>', which is likewise asynchronous.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/instance-create"
+}

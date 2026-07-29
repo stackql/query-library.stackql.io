@@ -1,0 +1,76 @@
+{
+  "id": "aws/ec2/instance-state-management",
+  "title": "EC2 instance state and lifecycle control",
+  "description": "Reports instance state and health checks for a region, and covers the stop and start lifecycle operations that change it.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "aws"
+  ],
+  "services": [
+    "ec2"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "ec2:DescribeInstanceStatus"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Region the instances are in",
+      "example": "ap-southeast-2"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "instance_id",
+      "type": "string",
+      "description": "Instance identifier"
+    },
+    {
+      "name": "state_name",
+      "type": "string",
+      "description": "running, stopped, pending, stopping, shutting-down or terminated"
+    },
+    {
+      "name": "instance_check",
+      "type": "string",
+      "description": "Instance status check - ok, impaired, insufficient-data or not-applicable"
+    },
+    {
+      "name": "system_check",
+      "type": "string",
+      "description": "System status check - ok, impaired, insufficient-data or not-applicable"
+    },
+    {
+      "name": "availability_zone",
+      "type": "string",
+      "description": "Availability zone the instance runs in"
+    },
+    {
+      "name": "events",
+      "type": "string",
+      "description": "Scheduled maintenance events affecting the instance"
+    }
+  ],
+  "cost": {
+    "fan_out": "region",
+    "expensive": false,
+    "notes": "One describe call per region when swept account-wide"
+  },
+  "related": [
+    "aws/ec2/instances-by-region",
+    "aws/ec2/instance-create",
+    "aws/ec2/regions-enabled"
+  ],
+  "template": "SELECT\ninstance_id,\njson_extract(instance_state, '$.name') as state_name,\njson_extract(instance_status, '$.status') as instance_check,\njson_extract(system_status, '$.status') as system_check,\navailability_zone,\nevents\nFROM aws.ec2.instance_status\nWHERE region = '{{region}}'\nAND IncludeAllInstances = true;",
+  "notes": "IncludeAllInstances = true is load-bearing: without it DescribeInstanceStatus returns only running instances, so stopped instances vanish from the result and an incomplete inventory looks like a complete one. instance_state, instance_status and system_status are all JSON objects - the state name is at $.name and each check result at $.status - and both checks read not-applicable while an instance is stopped rather than reporting a failure. Stop and start are asynchronous: they return on the state transition starting, not completing, so re-run the status query until the state settles. stop_instances also accepts optional @Hibernate, @Force, @SkipOsShutdown and @DryRun booleans, and start_instances accepts @AdditionalInfo and @DryRun. Stopping preserves EBS volumes and loses instance-store data; a stopped instance keeps its private IP but releases a non-elastic public IP, so the address changes on restart. To reboot in place use EXEC aws.ec2.instances.reboot_instances with the same arguments, and to terminate use DELETE FROM aws.ec2.instances WHERE region = '<region>' AND InstanceId = '<instance_id>'.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/instance-state-management",
+  "last_verified": "2026-07-29"
+}

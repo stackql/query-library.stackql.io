@@ -1,0 +1,76 @@
+{
+  "id": "aws/lambda/public-access-policies",
+  "title": "Lambda functions with public resource policies",
+  "description": "Reads a Lambda function's resource policy and flags statements granting invoke rights to a wildcard principal; the public-invoke exposure check.",
+  "mutation": false,
+  "verb": "select",
+  "status": "draft",
+  "providers": [
+    "aws"
+  ],
+  "services": [
+    "lambda"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "lambda:GetPolicy"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Region the function is in",
+      "example": "us-east-1"
+    },
+    {
+      "name": "function_name",
+      "type": "string",
+      "required": true,
+      "description": "Function to read the policy of; iterate the region's functions for a full sweep",
+      "example": "my-function"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "function_name",
+      "type": "string",
+      "description": "Function the policy belongs to"
+    },
+    {
+      "name": "allows_wildcard_principal",
+      "type": "string",
+      "description": "true when a statement names * as the principal"
+    },
+    {
+      "name": "has_source_arn_condition",
+      "type": "string",
+      "description": "true when the policy conditions on AWS:SourceArn"
+    },
+    {
+      "name": "has_source_account_condition",
+      "type": "string",
+      "description": "true when the policy conditions on AWS:SourceAccount"
+    },
+    {
+      "name": "policy",
+      "type": "string",
+      "description": "Full resource policy document as JSON; read it to confirm a finding"
+    }
+  ],
+  "cost": {
+    "fan_out": "account",
+    "expensive": false,
+    "notes": "One call per function when swept across a region"
+  },
+  "related": [
+    "aws/lambda/functions-list",
+    "aws/lambda/function-analytics"
+  ],
+  "template": "SELECT\n'{{function_name}}' as function_name,\nCASE WHEN instr(policy, '\"Principal\":\"*\"') > 0 OR instr(policy, '\"AWS\":\"*\"') > 0 THEN 'true' ELSE 'false' END as allows_wildcard_principal,\nCASE WHEN instr(policy, 'AWS:SourceArn') > 0 THEN 'true' ELSE 'false' END as has_source_arn_condition,\nCASE WHEN instr(policy, 'AWS:SourceAccount') > 0 THEN 'true' ELSE 'false' END as has_source_account_condition,\npolicy\nFROM aws.lambda.policies\nWHERE region = '{{region}}'\nAND function_name = '{{function_name}}';",
+  "notes": "An empty result means the function has no resource policy at all, which is the safe state - the API raises ResourceNotFoundException and stackql surfaces it as zero rows, not an error. A wildcard principal is not automatically a finding: AWS service integrations legitimately add statements with a service principal or with Principal * narrowed by an AWS:SourceArn or AWS:SourceAccount condition, which is why those conditions are flagged separately. Treat a wildcard principal with neither condition as the real exposure, and always read the returned policy document before reporting. The policy is a JSON string whose Statement key may hold an object or an array depending on statement count, so string matching is more robust here than positional JSON extraction. The function_name column is projected from the parameter because the policy resource returns only the policy document and its revision id.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/lambda/public-access-policies"
+}

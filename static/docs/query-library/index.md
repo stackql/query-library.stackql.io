@@ -6,7 +6,7 @@
 > (`<id>.json`) consumed by the stackql MCP server's `query_library_search`
 > and `query_library_get` tools.
 
-Build `ql-12708c8552907f46` | 21 entries | machine catalogue:
+Build `ql-8d8d8adb73d86ce4` | 35 entries | machine catalogue:
 [index.json](https://stackql.io/docs/query-library/index.json) |
 [manifest.json](https://stackql.io/docs/query-library/manifest.json)
 
@@ -14,14 +14,24 @@ Build `ql-12708c8552907f46` | 21 entries | machine catalogue:
 
 - [Cloud Control resource request by token](https://stackql.io/docs/query-library/queries/aws/cloud_control/resource-request-by-token) (select; draft; params: region, request_token): Gets the progress event for one Cloud Control resource request by its request token; poll it until the operation completes.
 - [Cloud Control resource requests by status](https://stackql.io/docs/query-library/queries/aws/cloud_control/resource-requests-by-status) (select; params: region, operation, operation_status): Lists recent Cloud Control resource requests in a region filtered by operation and status; the follow-up surface for asynchronous AWS mutations.
-- [Stop an EC2 instance](https://stackql.io/docs/query-library/queries/aws/ec2/instance-stop) (lifecycle; draft; params: region, instance_id): Stops one EC2 instance by instance id via the native stop lifecycle operation.
-- [EC2 instances in a region](https://stackql.io/docs/query-library/queries/aws/ec2/instances-by-region) (select; draft; params: region): Lists EC2 instances in one region with type, state, addressing and network placement.
-- [Enabled AWS regions](https://stackql.io/docs/query-library/queries/aws/ec2/regions-enabled) (select): Lists AWS regions with their opt-in status; exclude not-opted-in regions from sweeps.
-- [IAM users enumeration](https://stackql.io/docs/query-library/queries/aws/iam/users-list) (select; draft): Enumerates IAM user names in the account; IAM is global, the region only routes the call.
-- [Lambda functions in a region](https://stackql.io/docs/query-library/queries/aws/lambda/functions-list) (select; draft; params: region): Enumerates Lambda function names in one region via the list-only resource.
+- [Launch an EC2 instance](https://stackql.io/docs/query-library/queries/aws/ec2/instance-create) (mutation; draft; params: region, image_id, instance_type, subnet_id, user_data, tags): Launches an EC2 instance through Cloud Control, returning a progress event to poll; user data must be base64 encoded.
+- [EC2 instance state and lifecycle control](https://stackql.io/docs/query-library/queries/aws/ec2/instance-state-management) (select; params: region): Reports instance state and health checks for a region, and covers the stop and start lifecycle operations that change it.
+- [EC2 instance type specifications](https://stackql.io/docs/query-library/queries/aws/ec2/instance-types-lookup) (select; params: region, instance_type): Looks up vCPU, memory, architecture and capability details for named EC2 instance types; the architecture check before launching an instance.
+- [EC2 instances in a region](https://stackql.io/docs/query-library/queries/aws/ec2/instances-by-region) (select; params: region): Lists EC2 instances in one region with type, state, addressing and network placement.
+- [Enabled AWS regions](https://stackql.io/docs/query-library/queries/aws/ec2/regions-enabled) (select): Lists the AWS regions enabled for the account with endpoint, country and opt-in status; the valid fan-out list for region-swept queries.
+- [IAM access key age and rotation status](https://stackql.io/docs/query-library/queries/aws/iam/access-keys-age) (select; params: user_name): Lists a user's access keys with their age in days; keys older than the rotation window are the finding.
+- [IAM federated identity providers](https://stackql.io/docs/query-library/queries/aws/iam/identity-providers) (select): Inventories the SAML and OIDC identity providers registered in the account; the trusted federation surface behind assumable roles.
+- [IAM account password policy vs CIS benchmark](https://stackql.io/docs/query-library/queries/aws/iam/password-policy-cis) (select): Assesses the IAM account password policy against CIS AWS Foundations Benchmark password controls, returning raw values and per-control PASS/FAIL verdicts.
+- [IAM roles trusting external accounts](https://stackql.io/docs/query-library/queries/aws/iam/roles-external-trust) (select; params: account_id): Lists IAM roles whose trust policy admits principals from other AWS accounts, flagging external id and federation use; the cross-account exposure surface.
+- [IAM users with console access and no MFA](https://stackql.io/docs/query-library/queries/aws/iam/users-console-no-mfa) (select): Lists IAM users alongside whether they have a virtual MFA device registered; console-capable users without MFA are the finding.
+- [IAM users enumeration](https://stackql.io/docs/query-library/queries/aws/iam/users-list) (select): Enumerates IAM users in the account; IAM is global and always served from us-east-1, so the query takes no parameters.
+- [Lambda fleet analytics by runtime and architecture](https://stackql.io/docs/query-library/queries/aws/lambda/function-analytics) (select; params: region): Summarises a region's Lambda functions by runtime and architecture with counts and memory totals; the runtime modernisation and Graviton migration view.
+- [Lambda functions in a region](https://stackql.io/docs/query-library/queries/aws/lambda/functions-list) (select; params: region): Lists Lambda functions in one region with runtime, architecture, memory, timeout and execution role in a single call.
+- [Lambda functions with public resource policies](https://stackql.io/docs/query-library/queries/aws/lambda/public-access-policies) (select; draft; params: region, function_name): Reads a Lambda function's resource policy and flags statements granting invoke rights to a wildcard principal; the public-invoke exposure check.
 - [Set CloudWatch log group retention](https://stackql.io/docs/query-library/queries/aws/logs/log-group-retention-update) (mutation; draft; params: region, log_group_name, retention_days): Updates RetentionInDays on a CloudWatch log group via an asynchronous Cloud Control update.
-- [S3 bucket security detail](https://stackql.io/docs/query-library/queries/aws/s3/bucket-detail) (select; params: region, bucket_name): Full security attributes for one bucket: public access block, encryption, versioning, ownership.
-- [S3 buckets cheap enumeration](https://stackql.io/docs/query-library/queries/aws/s3/buckets-list) (select; params: region): Enumerates S3 bucket names and regions via the list-only resource; identifiers only, no detail.
+- [S3 bucket security detail](https://stackql.io/docs/query-library/queries/aws/s3/bucket-detail) (select; params: region, bucket_name): Full security configuration for one bucket: public access block, encryption, versioning, ownership controls and logging.
+- [S3 buckets cheap enumeration](https://stackql.io/docs/query-library/queries/aws/s3/buckets-list) (select): Enumerates every S3 bucket in the account with its ARN, home region and creation date in one account-global call.
+- [S3 bucket public access block audit](https://stackql.io/docs/query-library/queries/aws/s3/public-access-audit) (select; params: region, bucket_name): Reports the four block-public-access settings plus object ownership for a bucket; any flag returning 0 leaves a public exposure path open.
 - [Find AWS resource identifiers by tag](https://stackql.io/docs/query-library/queries/aws/tagging/resources-by-tag) (select; params: region, resource_type, tag_key, tag_value): Resolves identifiers for ID-centric AWS resource types by querying the tagging API with a resource type and tag filter; returns ARNs, extracted ids and tags.
 
 ## azure
@@ -40,7 +50,11 @@ Build `ql-12708c8552907f46` | 21 entries | machine catalogue:
 
 ## github
 
-- [GitHub repositories in an organization](https://stackql.io/docs/query-library/queries/github/repos/org-repos-list) (select; params: org): Lists all repositories in a GitHub organization with visibility, archive state and activity signals.
+- [GitHub issue creation velocity](https://stackql.io/docs/query-library/queries/github/issues/issue-velocity) (select; draft; params: owner, repo): Sequences a repository's issues by creation date with a cumulative count and the gap since the previous issue; the intake rate and quiet-period view.
+- [GitHub weekly commit activity trend](https://stackql.io/docs/query-library/queries/github/repos/commit-activity-trend) (select; params: owner, repo): Reports the last year of weekly commit counts with a four-week moving average and cumulative total; the project momentum view.
+- [GitHub contributor ranking and concentration](https://stackql.io/docs/query-library/queries/github/repos/contributor-analytics) (select; params: owner, repo): Ranks a repository's contributors by commit count with running totals and share of the whole; the bus-factor and contribution concentration view.
+- [GitHub repositories in an organization](https://stackql.io/docs/query-library/queries/github/repos/org-repos-list) (select; params: org): Lists all repositories in a GitHub organization with visibility, archive state and activity signals, filtered and sorted server-side.
+- [GitHub release cadence and gaps](https://stackql.io/docs/query-library/queries/github/repos/release-cadence) (select; params: owner, repo): Lists a repository's releases with the previous and next tag alongside the interval between them; the shipping rhythm and release drought view.
 
 ## google
 

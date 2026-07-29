@@ -2,9 +2,9 @@
 title: EC2 instances in a region
 description: Lists EC2 instances in one region with type, state, addressing and network placement.
 verb: select
-status: draft
+status: stable
 providers: [aws]
-services: [ec2, ec2_native]
+services: [ec2]
 tags: [aws, ec2, compute, inventory]
 keywords: [ec2 inventory, instance list, running instances]
 intent_keywords:
@@ -18,53 +18,111 @@ params:
     type: identifier
     required: true
     description: Region to list instances in
-    example: us-east-1
+    example: ap-southeast-2
 outputs:
-  - name: instanceId
+  - name: instance_id
     type: string
     description: Instance identifier
-  - name: instanceType
+  - name: instance_type
     type: string
-    description: Instance type (e.g. t3.micro)
-  - name: instanceState
-    type: object
-    description: State object; the name key holds running, stopped, etc.
-  - name: privateIpAddress
+    description: Instance type, e.g. t3.micro
+  - name: state_name
+    type: string
+    description: Instance state name - running, stopped, terminated
+  - name: private_ip_address
     type: string
     description: Primary private IPv4 address
-  - name: ipAddress
+  - name: public_ip_address
     type: string
-    description: Public IPv4 address, empty when none
-  - name: launchTime
+    description: Public IPv4 address; the string null when the instance has none
+  - name: launch_time
     type: string
     description: Launch timestamp
-  - name: vpcId
+  - name: vpc_id
     type: string
     description: VPC the instance is in
-  - name: subnetId
+  - name: subnet_id
     type: string
     description: Subnet the instance is in
 cost:
   fan_out: region
   expensive: false
   notes: One describe call per region when swept account-wide
-related: [aws/ec2/regions-enabled, aws/ec2/instance-stop]
+related:
+  - aws/ec2/regions-enabled
+  - aws/ec2/instance-state-management
+  - aws/tagging/resources-by-tag
+last_verified: "2026-07-29"
 ---
 
 Lists every EC2 instance in a single region with the fields that answer most
 inventory asks: type, state, private and public addressing, and network
-placement. For an account-wide inventory, run aws/ec2/regions-enabled first and
-fan this query out over the enabled regions.
+placement. For an account-wide inventory, run aws/ec2/regions-enabled first
+and fan this query out over the enabled regions.
 
 ## Query
 
 ```sql
-SELECT instanceId, instanceType, instanceState, privateIpAddress, ipAddress, launchTime, vpcId, subnetId FROM aws.ec2_native.instances WHERE region = '{{region}}';
+SELECT
+instance_id,
+instance_type,
+json_extract(state, '$.name') as state_name,
+private_ip_address,
+public_ip_address,
+launch_time,
+vpc_id,
+subnet_id
+FROM aws.ec2.instances
+WHERE region = '{{region}}';
+```
+
+## Variation: instance names from tags
+
+EC2 is ID-centric - the human-meaningful name lives in the Name tag. Explode
+the tags array in a subquery and filter on the tag key in the outer query:
+
+```sql
+SELECT instance_id, instance_type, state_name, name_tag FROM (
+SELECT
+instance_id,
+instance_type,
+json_extract(state, '$.name') as state_name,
+json_extract(json_each.value, '$.key') as tag_key,
+json_extract(json_each.value, '$.value') as name_tag
+FROM aws.ec2.instances, json_each(json_extract(tags, '$.item'))
+WHERE region = '{{region}}'
+) t WHERE tag_key = 'Name';
+```
+
+## PostgreSQL backend dialect
+
+json_extract and json_each are the default embedded SQLite backend's
+dialect; on a PostgreSQL-backed instance use json_extract_path_text:
+
+```sql
+SELECT
+instance_id,
+instance_type,
+json_extract_path_text(state::json, 'name') as state_name,
+private_ip_address,
+public_ip_address,
+launch_time,
+vpc_id,
+subnet_id
+FROM aws.ec2.instances
+WHERE region = '{{region}}';
 ```
 
 ## Notes
 
-instanceState is an object; filter on its name key (running, stopped,
-terminated) client-side or with JSON extraction. Terminated instances remain
-visible for about an hour after termination. ipAddress is empty for instances
-with no public IP.
+state is a JSON object with lowercase keys ({"code":80,"name":"stopped"}),
+so extract the name rather than comparing the column directly; code 16 is
+running and 80 is stopped. public_ip_address is the string null for
+instances with no public IP, not SQL NULL. Terminated instances stay visible
+for about an hour after termination, so filter on state_name when counting
+live capacity. tags is an object wrapping an item array of key/value pairs.
+In the tags variation the tag_key filter must sit in the outer query: a
+predicate on a json_each expression in the same WHERE clause as the table
+function is silently dropped, returning every tag instead of the one asked
+for. To find instances by tag across a region, use
+aws/tagging/resources-by-tag instead.

@@ -65,6 +65,7 @@ cost:
 related:
   - aws/cloud_control/resource-request-by-token
   - aws/cloud_control/resource-requests-by-status
+last_verified: "2026-07-29"
 ---
 
 Sets the retention period on a CloudWatch log group. The update is

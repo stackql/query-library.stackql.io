@@ -1,0 +1,96 @@
+{
+  "id": "aws/ec2/instance-types-lookup",
+  "title": "EC2 instance type specifications",
+  "description": "Looks up vCPU, memory, architecture and capability details for named EC2 instance types; the architecture check before launching an instance.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "aws"
+  ],
+  "services": [
+    "ec2"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "permissions": [
+    "ec2:DescribeInstanceTypes"
+  ],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Region to check availability in; type availability varies by region",
+      "example": "ap-southeast-2"
+    },
+    {
+      "name": "instance_type",
+      "type": "string",
+      "required": true,
+      "description": "Instance type to look up",
+      "example": "t4g.nano"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "instance_type",
+      "type": "string",
+      "description": "Instance type name"
+    },
+    {
+      "name": "vcpus",
+      "type": "number",
+      "description": "Default vCPU count"
+    },
+    {
+      "name": "memory_mib",
+      "type": "number",
+      "description": "Memory in MiB"
+    },
+    {
+      "name": "architecture",
+      "type": "string",
+      "description": "Supported architecture - arm64, x86_64, or a JSON array when several are supported"
+    },
+    {
+      "name": "processor",
+      "type": "string",
+      "description": "Processor manufacturer - AWS, Intel, AMD or Apple"
+    },
+    {
+      "name": "current_generation",
+      "type": "boolean",
+      "description": "Whether the type is current generation"
+    },
+    {
+      "name": "burstable_performance_supported",
+      "type": "boolean",
+      "description": "Whether this is a burstable T-family type"
+    },
+    {
+      "name": "free_tier_eligible",
+      "type": "boolean",
+      "description": "Whether the type is free tier eligible"
+    },
+    {
+      "name": "hibernation_supported",
+      "type": "boolean",
+      "description": "Whether on-demand hibernation is supported"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false
+  },
+  "related": [
+    "aws/ec2/instance-create",
+    "aws/ec2/instances-by-region"
+  ],
+  "template": "SELECT\ninstance_type,\njson_extract(v_cpu_info, '$.defaultVCpus') + 0 as vcpus,\njson_extract(memory_info, '$.sizeInMiB') + 0 as memory_mib,\njson_extract(processor_info, '$.supportedArchitectures.item') as architecture,\njson_extract(processor_info, '$.manufacturer') as processor,\ncurrent_generation,\nburstable_performance_supported,\nfree_tier_eligible,\nhibernation_supported\nFROM aws.ec2.instance_types\nWHERE region = '{{region}}'\nAND InstanceType = '{{instance_type}}';",
+  "notes": "Always name the types you want with InstanceType: an unfiltered select returns only the first page of about 100 types out of roughly 850, with no error and no indication of truncation, so filtering that result client-side silently produces incomplete answers - never use it to search for types matching a size or architecture. The Filter input param is declared on the resource but returns an empty result rather than filtering, so avoid it. json_extract returns text, so numeric comparisons need the + 0 coercion shown above; without it memory_mib <= 2048 compares lexicographically and quietly excludes matches (CAST(x AS INTEGER) does not parse in stackql). architecture comes back as a bare string for single-architecture types and as a JSON array for types supporting several (older types report [\"i386\",\"x86_64\"]). Instance sizing detail beyond these columns is available in the network_info, ebs_info, gpu_info and instance_storage_info JSON columns.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/instance-types-lookup",
+  "last_verified": "2026-07-29"
+}
