@@ -1,0 +1,42 @@
+{
+  "id": "cloudflare/ips/edge-ip-ranges",
+  "title": "Cloudflare edge IP ranges",
+  "description": "Returns Cloudflare's published IPv4 and IPv6 edge ranges as one CIDR per row; the source list for origin firewall allowlists.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "cloudflare"
+  ],
+  "services": [
+    "ips"
+  ],
+  "auth": [
+    "CLOUDFLARE_API_TOKEN"
+  ],
+  "params": [],
+  "outputs": [
+    {
+      "name": "family",
+      "type": "string",
+      "description": "ipv4 or ipv6"
+    },
+    {
+      "name": "cidr",
+      "type": "string",
+      "description": "A single CIDR block Cloudflare serves traffic from"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false,
+    "notes": "Single unauthenticated call; the list changes rarely"
+  },
+  "related": [
+    "cloudflare/zones/zones-list"
+  ],
+  "template": "SELECT 'ipv4' AS family, json_each.value AS cidr\nFROM cloudflare.ips.ips, json_each(ipv4_cidrs)\nUNION ALL\nSELECT 'ipv6' AS family, json_each.value AS cidr\nFROM cloudflare.ips.ips, json_each(ipv6_cidrs);",
+  "notes": "The underlying endpoint is a single row holding two JSON arrays, so the json_each explosion is what makes it usable as an allowlist - fifteen IPv4 and seven IPv6 ranges at the time of writing. The endpoint needs no Cloudflare credentials, but stackql still requires the token environment variable to be present because authentication is configured per provider rather than per operation: with CLOUDFLARE_API_TOKEN unset the query fails with 'credentials error: credentialsenvvar references empty string' rather than succeeding anonymously, so set the variable to any non-empty value if you have no token. jdcloud_cidrs is null unless the account is on the China network. Both address families must be allowed on a dual-stack origin; allowing only IPv4 silently blocks Cloudflare's IPv6 egress. Poll on a schedule and compare the etag rather than assuming the list is static.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/cloudflare/ips/edge-ip-ranges",
+  "last_verified": "2026-07-30"
+}

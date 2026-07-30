@@ -1,0 +1,73 @@
+{
+  "id": "azure/network/vnet-subnet-provision",
+  "title": "Azure virtual network and subnet provisioning",
+  "description": "Creates a virtual network and subnet, and lists them with their address ranges; the network substrate VMs and private endpoints attach to.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "azure"
+  ],
+  "services": [
+    "network"
+  ],
+  "auth": [
+    "AZURE_TENANT_ID",
+    "AZURE_CLIENT_ID",
+    "AZURE_CLIENT_SECRET"
+  ],
+  "permissions": [
+    "Microsoft.Network/virtualNetworks/read"
+  ],
+  "params": [
+    {
+      "name": "subscription_id",
+      "type": "string",
+      "required": true,
+      "description": "Azure subscription id (GUID)",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    {
+      "name": "resource_group_name",
+      "type": "string",
+      "required": true,
+      "description": "Resource group containing the virtual network",
+      "example": "my-resource-group"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "name",
+      "type": "string",
+      "description": "Virtual network name"
+    },
+    {
+      "name": "location",
+      "type": "string",
+      "description": "Region"
+    },
+    {
+      "name": "provisioning_state",
+      "type": "string",
+      "description": "Succeeded, Updating or Failed"
+    },
+    {
+      "name": "address_space",
+      "type": "object",
+      "description": "Address space object holding the addressPrefixes array"
+    }
+  ],
+  "cost": {
+    "fan_out": "subscription",
+    "expensive": false
+  },
+  "related": [
+    "azure/resource/resource-groups-lifecycle",
+    "azure/compute/vms-by-subscription"
+  ],
+  "template": "SELECT name, location, provisioning_state, address_space\nFROM azure.network.virtual_networks\nWHERE subscription_id = '{{subscription_id}}'\nAND resource_group_name = '{{resource_group_name}}';",
+  "notes": "Body properties are plain columns - location and properties - with no data__ prefix; the older data__location form fails with InvalidResource against this provider. The subnet exposes address_prefix as a flattened top-level column on read while taking addressPrefix nested inside properties on write, so the read and write shapes differ. A vnet reports provisioning_state Updating for a short window after a subnet is added, which is normal rather than a failure. Subnets cannot be deleted while anything is attached: removing one that still has a network interface fails with InUseSubnetCannotBeDeleted, so delete dependants first, or delete the whole resource group to cascade. Network interfaces live at azure.network.network_interfaces - note the resource is network_interfaces, not interfaces.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/azure/network/vnet-subnet-provision",
+  "last_verified": "2026-07-30"
+}

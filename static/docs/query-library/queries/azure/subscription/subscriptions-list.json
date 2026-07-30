@@ -1,10 +1,10 @@
 {
   "id": "azure/subscription/subscriptions-list",
-  "title": "Azure subscriptions",
-  "description": "Lists subscriptions visible to the credential, tenant-wide; audit only Enabled subscriptions.",
+  "title": "Azure subscription detail",
+  "description": "Reads a subscription's name and state; requires owner-level rights, so most service principals cannot call it.",
   "mutation": false,
   "verb": "select",
-  "status": "stable",
+  "status": "draft",
   "providers": [
     "azure"
   ],
@@ -19,12 +19,21 @@
   "permissions": [
     "Microsoft.Resources/subscriptions/read"
   ],
-  "params": [],
+  "params": [
+    {
+      "name": "subscription_id",
+      "type": "string",
+      "required": true,
+      "description": "Azure subscription id (GUID)",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    }
+  ],
   "outputs": [
     {
-      "name": "subscriptionId",
+      "name": "name",
       "type": "string",
-      "description": "Subscription identifier"
+      "description": "Subscription display name"
     },
     {
       "name": "state",
@@ -36,8 +45,10 @@
     "fan_out": "none",
     "expensive": false
   },
-  "template": "SELECT subscriptionId, state FROM azure.subscription.subscriptions;",
-  "notes": "For management-group scoping use azure.management_groups.descendants with groupId.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/azure/subscription/subscriptions-list",
-  "author_company": "StackQL Studios"
+  "related": [
+    "azure/resource/resource-groups-lifecycle"
+  ],
+  "template": "SELECT name, state\nFROM azure.subscription.subscriptions\nWHERE subscription_id = '{{subscription_id}}';",
+  "notes": "subscription_id is required - this reads one subscription rather than enumerating them, so it cannot be used to discover which subscriptions a credential can reach. A service principal without the Owner role gets HTTP 401 with code UserNotAuthorized and the message that only subscription owners can perform the operation; that is the expected result for the least-privilege credentials most automation uses, not a defect. When the goal is simply to confirm a credential works against a subscription, list resource groups instead - see azure/resource/resource-groups-lifecycle - which needs only Reader. This entry is draft because the owner-only path has not been exercised successfully; the authorization failure is the only behaviour that has been observed.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/azure/subscription/subscriptions-list"
 }

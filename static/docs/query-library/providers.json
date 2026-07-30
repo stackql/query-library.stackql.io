@@ -10,14 +10,14 @@
     "id": "azure",
     "title": "Microsoft Azure",
     "description": "Cloud computing services offered by Microsoft.",
-    "count": 3,
+    "count": 8,
     "logo": "/img/providers/azure/favicon.ico"
   },
   {
     "id": "cloudflare",
     "title": "Cloudflare",
     "description": "CDN, DNS, security and edge compute platform.",
-    "count": 1,
+    "count": 6,
     "logo": "/img/providers/cloudflare/favicon.ico"
   },
   {

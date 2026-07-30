@@ -1,5 +1,5 @@
 {
-  "build_id": "ql-8d8d8adb73d86ce4",
+  "build_id": "ql-8fb30b882934e7b6",
   "entries": [
     {
       "id": "aws/cloud_control/resource-request-by-token",
@@ -748,9 +748,47 @@
       ]
     },
     {
+      "id": "azure/compute/vm-custom-script-extension",
+      "title": "Azure VM custom script extension",
+      "description": "Runs a shell command on an existing VM via the CustomScript extension, and lists the extensions installed on a VM; the way to load content onto a server after provisioning.",
+      "providers": [
+        "azure"
+      ],
+      "services": [
+        "compute"
+      ],
+      "tags": [
+        "azure",
+        "compute",
+        "vms",
+        "extension",
+        "bootstrap"
+      ],
+      "keywords": [
+        "custom script",
+        "vm extension",
+        "bootstrap vm",
+        "run command on vm",
+        "install software"
+      ],
+      "intent_keywords": [
+        "run a script on an azure vm",
+        "install software on a vm after creation",
+        "list vm extensions"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "draft",
+      "required_params": [
+        "subscription_id",
+        "resource_group_name",
+        "vm_name"
+      ]
+    },
+    {
       "id": "azure/compute/vms-by-subscription",
       "title": "Azure VMs in a subscription",
-      "description": "Lists all virtual machines across a subscription with name, location and tags.",
+      "description": "Lists virtual machines across a subscription with name, location, provisioning state and the profiles describing size, image and networking.",
       "providers": [
         "azure"
       ],
@@ -766,7 +804,8 @@
       "keywords": [
         "vm list",
         "virtual machine inventory",
-        "azure vms"
+        "azure vms",
+        "vm size"
       ],
       "intent_keywords": [
         "list azure vms",
@@ -775,15 +814,161 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": [
         "subscription_id"
       ]
     },
     {
-      "id": "azure/storage/storage-accounts-security",
-      "title": "Azure storage accounts security posture",
-      "description": "Lists storage accounts in a subscription with public access, TLS and HTTPS-only settings flattened.",
+      "id": "azure/cosmosdb/table-lifecycle",
+      "title": "Azure Cosmos DB table lifecycle",
+      "description": "Provisions a serverless Cosmos DB account with the Table API, creates and lists tables, and tears them down; the control-plane half of a Table workload.",
+      "providers": [
+        "azure"
+      ],
+      "services": [
+        "cosmosdb"
+      ],
+      "tags": [
+        "azure",
+        "cosmosdb",
+        "table",
+        "nosql",
+        "lifecycle"
+      ],
+      "keywords": [
+        "cosmos db",
+        "table api",
+        "serverless cosmos",
+        "create table",
+        "database account"
+      ],
+      "intent_keywords": [
+        "create a cosmos db table",
+        "list cosmos db tables",
+        "provision a serverless cosmos account"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "subscription_id",
+        "resource_group_name",
+        "account_name"
+      ]
+    },
+    {
+      "id": "azure/network/public-ip-provision",
+      "title": "Azure public IP address provisioning",
+      "description": "Lists public IP addresses in a resource group, and creates or deletes a static Standard SKU address for attaching to a NIC or load balancer.",
+      "providers": [
+        "azure"
+      ],
+      "services": [
+        "network"
+      ],
+      "tags": [
+        "azure",
+        "network",
+        "public-ip",
+        "lifecycle",
+        "inventory"
+      ],
+      "keywords": [
+        "public ip",
+        "static ip",
+        "ip allocation",
+        "standard sku",
+        "exposed address"
+      ],
+      "intent_keywords": [
+        "list azure public ip addresses",
+        "create a static public ip",
+        "which public ips are allocated"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "subscription_id",
+        "resource_group_name"
+      ]
+    },
+    {
+      "id": "azure/network/vnet-subnet-provision",
+      "title": "Azure virtual network and subnet provisioning",
+      "description": "Creates a virtual network and subnet, and lists them with their address ranges; the network substrate VMs and private endpoints attach to.",
+      "providers": [
+        "azure"
+      ],
+      "services": [
+        "network"
+      ],
+      "tags": [
+        "azure",
+        "network",
+        "vnet",
+        "subnet",
+        "lifecycle"
+      ],
+      "keywords": [
+        "virtual network",
+        "vnet",
+        "subnet",
+        "address prefix",
+        "cidr"
+      ],
+      "intent_keywords": [
+        "list azure virtual networks",
+        "create a vnet and subnet",
+        "what subnets exist in my vnet"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "subscription_id",
+        "resource_group_name"
+      ]
+    },
+    {
+      "id": "azure/resource/resource-groups-lifecycle",
+      "title": "Azure resource group lifecycle",
+      "description": "Lists resource groups in a subscription, and creates or deletes one; the container every other Azure resource lives in.",
+      "providers": [
+        "azure"
+      ],
+      "services": [
+        "resource"
+      ],
+      "tags": [
+        "azure",
+        "resource",
+        "inventory",
+        "lifecycle"
+      ],
+      "keywords": [
+        "resource group",
+        "rg list",
+        "create resource group",
+        "delete resource group"
+      ],
+      "intent_keywords": [
+        "list azure resource groups",
+        "create a resource group",
+        "delete a resource group"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "subscription_id"
+      ]
+    },
+    {
+      "id": "azure/storage/storage-account-provision",
+      "title": "Azure storage account and blob container provisioning",
+      "description": "Lists storage accounts in a subscription, and creates an account with a private blob container; the object storage substrate.",
       "providers": [
         "azure"
       ],
@@ -793,31 +978,32 @@
       "tags": [
         "azure",
         "storage",
-        "security",
+        "blob",
+        "lifecycle",
         "inventory"
       ],
       "keywords": [
-        "storage account list",
-        "blob public access",
-        "tls version",
-        "https only"
+        "storage account",
+        "blob container",
+        "create storage",
+        "object storage"
       ],
       "intent_keywords": [
         "list azure storage accounts",
-        "which storage accounts allow public access",
-        "storage account security settings"
+        "create a storage account",
+        "create a blob container"
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": [
         "subscription_id"
       ]
     },
     {
       "id": "azure/subscription/subscriptions-list",
-      "title": "Azure subscriptions",
-      "description": "Lists subscriptions visible to the credential, tenant-wide; audit only Enabled subscriptions.",
+      "title": "Azure subscription detail",
+      "description": "Reads a subscription's name and state; requires owner-level rights, so most service principals cannot call it.",
       "providers": [
         "azure"
       ],
@@ -831,11 +1017,85 @@
       ],
       "keywords": [
         "subscription list",
-        "tenant subscriptions"
+        "tenant subscriptions",
+        "subscription state"
       ],
       "intent_keywords": [
         "list azure subscriptions",
-        "enumerate subscriptions"
+        "enumerate subscriptions",
+        "what subscriptions can i see"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "draft",
+      "required_params": [
+        "subscription_id"
+      ]
+    },
+    {
+      "id": "cloudflare/accounts/api-token-lifecycle",
+      "title": "Cloudflare API token creation and scope management",
+      "description": "Looks up permission group ids by name and mints or rescopes an account API token from them; builds least-privilege tokens without hardcoding UUIDs.",
+      "providers": [
+        "cloudflare"
+      ],
+      "services": [
+        "accounts"
+      ],
+      "tags": [
+        "cloudflare",
+        "accounts",
+        "security",
+        "identity",
+        "tokens"
+      ],
+      "keywords": [
+        "api token",
+        "permission groups",
+        "least privilege",
+        "token scopes",
+        "rotate token"
+      ],
+      "intent_keywords": [
+        "create a cloudflare api token",
+        "what permission groups are available",
+        "change the scopes on an api token"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "account_id"
+      ]
+    },
+    {
+      "id": "cloudflare/ips/edge-ip-ranges",
+      "title": "Cloudflare edge IP ranges",
+      "description": "Returns Cloudflare's published IPv4 and IPv6 edge ranges as one CIDR per row; the source list for origin firewall allowlists.",
+      "providers": [
+        "cloudflare"
+      ],
+      "services": [
+        "ips"
+      ],
+      "tags": [
+        "cloudflare",
+        "network",
+        "security",
+        "allowlist",
+        "reference"
+      ],
+      "keywords": [
+        "cloudflare ip ranges",
+        "edge ips",
+        "origin allowlist",
+        "cidr",
+        "firewall rules"
+      ],
+      "intent_keywords": [
+        "what are cloudflare's ip ranges",
+        "cloudflare ips to allowlist on my origin",
+        "cloudflare edge cidr list"
       ],
       "mutation": false,
       "verb": "select",
@@ -843,9 +1103,120 @@
       "required_params": []
     },
     {
+      "id": "cloudflare/kv/kv-lifecycle",
+      "title": "Cloudflare KV namespace and value lifecycle",
+      "description": "Creates a KV namespace, writes and reads a value, lists keys and deletes both; the full control-plane to data-plane cycle in one surface.",
+      "providers": [
+        "cloudflare"
+      ],
+      "services": [
+        "kv"
+      ],
+      "tags": [
+        "cloudflare",
+        "kv",
+        "storage",
+        "lifecycle",
+        "dataplane"
+      ],
+      "keywords": [
+        "workers kv",
+        "key value store",
+        "kv namespace",
+        "write value",
+        "read value"
+      ],
+      "intent_keywords": [
+        "list cloudflare kv namespaces",
+        "write a value to kv",
+        "read a kv key"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "account_id",
+        "namespace_id"
+      ]
+    },
+    {
+      "id": "cloudflare/rulesets/rate-limit-ruleset",
+      "title": "Cloudflare rate limit ruleset",
+      "description": "Reads the rate limiting rules on a zone's http_ratelimit phase, and sets or clears them; the entrypoint ruleset pattern used for edge throttling.",
+      "providers": [
+        "cloudflare"
+      ],
+      "services": [
+        "rulesets"
+      ],
+      "tags": [
+        "cloudflare",
+        "rulesets",
+        "rate-limit",
+        "security",
+        "edge"
+      ],
+      "keywords": [
+        "rate limiting",
+        "ruleset phase",
+        "throttle",
+        "http_ratelimit",
+        "entrypoint ruleset"
+      ],
+      "intent_keywords": [
+        "show my cloudflare rate limit rules",
+        "set a rate limit on a zone",
+        "is rate limiting configured"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "draft",
+      "required_params": [
+        "zone_id"
+      ]
+    },
+    {
+      "id": "cloudflare/zones/http-analytics",
+      "title": "Cloudflare HTTP request analytics by country and status",
+      "description": "Returns HTTP request volume for a zone grouped by minute, country, method and response status; the GraphQL analytics replacement for the sunset dashboard endpoint.",
+      "providers": [
+        "cloudflare"
+      ],
+      "services": [
+        "zones"
+      ],
+      "tags": [
+        "cloudflare",
+        "analytics",
+        "zones",
+        "traffic",
+        "graphql"
+      ],
+      "keywords": [
+        "http analytics",
+        "requests by country",
+        "traffic analysis",
+        "adaptive groups",
+        "edge status"
+      ],
+      "intent_keywords": [
+        "how much traffic is my site getting",
+        "cloudflare requests by country",
+        "http status code breakdown"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "zone_tag",
+        "since",
+        "until"
+      ]
+    },
+    {
       "id": "cloudflare/zones/zones-list",
       "title": "Cloudflare zones",
-      "description": "Lists all Cloudflare zones visible to the token with status and pause state.",
+      "description": "Lists all Cloudflare zones visible to the API token with status and pause state; the zone id keys every per-zone API.",
       "providers": [
         "cloudflare"
       ],
@@ -861,7 +1232,8 @@
       "keywords": [
         "zone list",
         "domains on cloudflare",
-        "dns zones"
+        "dns zones",
+        "zone id"
       ],
       "intent_keywords": [
         "list cloudflare zones",
@@ -870,7 +1242,7 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": []
     },
     {

@@ -1,12 +1,12 @@
 ---
 title: Azure VMs in a subscription
-description: Lists all virtual machines across a subscription with name, location and tags.
+description: Lists virtual machines across a subscription with name, location, provisioning state and the profiles describing size, image and networking.
 verb: select
-status: draft
+status: stable
 providers: [azure]
 services: [compute]
 tags: [azure, compute, vms, inventory]
-keywords: [vm list, virtual machine inventory, azure vms]
+keywords: [vm list, virtual machine inventory, azure vms, vm size]
 intent_keywords:
   - list azure vms
   - what virtual machines exist in my subscription
@@ -26,10 +26,16 @@ outputs:
     description: VM name
   - name: location
     type: string
-    description: Azure region
-  - name: properties
-    type: object
-    description: VM properties including vmId, hardwareProfile and provisioningState
+    description: Region
+  - name: provisioning_state
+    type: string
+    description: Succeeded, Creating, Updating or Failed
+  - name: vm_id
+    type: string
+    description: Stable unique VM identifier
+  - name: vm_size
+    type: string
+    description: SKU name extracted from hardware_profile
   - name: tags
     type: object
     description: Resource tags
@@ -37,22 +43,49 @@ cost:
   fan_out: subscription
   expensive: false
   notes: One list call per subscription when swept tenant-wide
-related: [azure/subscription/subscriptions-list]
+related:
+  - azure/resource/resource-groups-lifecycle
+  - azure/network/vnet-subnet-provision
+last_verified: "2026-07-30"
 ---
 
-Lists every virtual machine across a whole subscription, without needing to
-know resource group names up front. For a tenant-wide inventory, iterate the
-subscriptions from azure/subscription/subscriptions-list.
+Lists every virtual machine across a subscription without needing to know
+resource group names up front. The size, image and networking details live in
+JSON profile columns; the query extracts the size, which is the field most
+inventory asks need.
 
 ## Query
 
 ```sql
-SELECT name, location, properties, tags FROM azure.compute.virtual_machines WHERE subscriptionId = '{{subscription_id}}';
+SELECT
+name,
+location,
+provisioning_state,
+vm_id,
+JSON_EXTRACT(hardware_profile, '$.vmSize') as vm_size,
+tags
+FROM azure.compute.virtual_machines
+WHERE subscription_id = '{{subscription_id}}';
+```
+
+## Variation: scoped to one resource group
+
+```sql
+SELECT name, location, provisioning_state, vm_id
+FROM azure.compute.virtual_machines
+WHERE subscription_id = '{{subscription_id}}'
+AND resource_group_name = 'my-resource-group';
 ```
 
 ## Notes
 
-Filtering by subscriptionId alone routes to the listAll operation. Power state
-is not in the list response; it comes from the instance_view operation per VM
-(EXEC azure.compute.virtual_machines.instance_view). Extract vmSize from
-properties with JSON extraction.
+Filtering by subscription_id alone routes to the list-all operation; adding
+resource_group_name narrows it to a group. provisioning_state describes the
+control-plane deployment, not whether the machine is running - the power
+state comes from the per-VM instance view rather than the list response, so
+a VM reading Succeeded here may still be stopped. The profile columns
+(hardware_profile, storage_profile, os_profile, network_profile) are JSON
+objects: extract the size with JSON_EXTRACT(hardware_profile, '$.vmSize') and
+the image with JSON_EXTRACT(storage_profile, '$.imageReference.sku'). An
+empty result means the subscription has no VMs, which is a valid answer
+rather than a failure.

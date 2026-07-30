@@ -1,0 +1,66 @@
+{
+  "id": "azure/storage/storage-account-provision",
+  "title": "Azure storage account and blob container provisioning",
+  "description": "Lists storage accounts in a subscription, and creates an account with a private blob container; the object storage substrate.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "azure"
+  ],
+  "services": [
+    "storage"
+  ],
+  "auth": [
+    "AZURE_TENANT_ID",
+    "AZURE_CLIENT_ID",
+    "AZURE_CLIENT_SECRET"
+  ],
+  "permissions": [
+    "Microsoft.Storage/storageAccounts/read"
+  ],
+  "params": [
+    {
+      "name": "subscription_id",
+      "type": "string",
+      "required": true,
+      "description": "Azure subscription id (GUID)",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "name",
+      "type": "string",
+      "description": "Storage account name, globally unique"
+    },
+    {
+      "name": "location",
+      "type": "string",
+      "description": "Region"
+    },
+    {
+      "name": "kind",
+      "type": "string",
+      "description": "StorageV2, BlobStorage or FileStorage"
+    },
+    {
+      "name": "provisioning_state",
+      "type": "string",
+      "description": "Succeeded, ResolvingDns or Creating"
+    }
+  ],
+  "cost": {
+    "fan_out": "subscription",
+    "expensive": false,
+    "notes": "One list call per subscription when swept tenant-wide"
+  },
+  "related": [
+    "azure/resource/resource-groups-lifecycle"
+  ],
+  "template": "SELECT name, location, kind, provisioning_state\nFROM azure.storage.storage_accounts\nWHERE subscription_id = '{{subscription_id}}';",
+  "notes": "Body properties are plain columns with no data__ prefix. A storage account passes through provisioning_state ResolvingDns before Succeeded because the account name becomes a public DNS label, so poll rather than assuming the account is usable immediately after the insert returns. publicAccess None on the container plus allowBlobPublicAccess false on the account are the two independent controls that keep blobs private - the account-level setting wins, so a container requesting public access on a locked-down account still resolves to private. Listing containers requires the account_name as well as the resource group. Blob content operations sit on the separate data plane service azure.storage_blob, which authenticates independently of the control plane.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/azure/storage/storage-account-provision",
+  "last_verified": "2026-07-30"
+}

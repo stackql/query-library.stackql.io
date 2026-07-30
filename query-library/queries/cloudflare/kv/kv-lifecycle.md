@@ -1,0 +1,116 @@
+---
+title: Cloudflare KV namespace and value lifecycle
+description: Creates a KV namespace, writes and reads a value, lists keys and deletes both; the full control-plane to data-plane cycle in one surface.
+verb: select
+status: stable
+providers: [cloudflare]
+services: [kv]
+tags: [cloudflare, kv, storage, lifecycle, dataplane]
+keywords: [workers kv, key value store, kv namespace, write value, read value]
+intent_keywords:
+  - list cloudflare kv namespaces
+  - write a value to kv
+  - read a kv key
+auth: [CLOUDFLARE_API_TOKEN]
+params:
+  - name: account_id
+    type: string
+    required: true
+    description: Cloudflare account id
+    example: 4132d7d5587ee99b9d482ecfc2c1853c
+  - name: namespace_id
+    type: string
+    required: true
+    description: KV namespace id, from the namespace listing
+    example: cb5d30d6801449b3bfbd3a3c34833640
+outputs:
+  - name: name
+    type: string
+    description: Key name
+cost:
+  fan_out: account
+  expensive: false
+  notes: Key listing is paginated per namespace
+related:
+  - cloudflare/zones/zones-list
+last_verified: "2026-07-30"
+---
+
+Lists the keys in a KV namespace, and covers the whole lifecycle around it:
+creating a namespace, writing a value, reading it back, and deleting both.
+Namespaces are managed through the Cloudflare API like any other resource,
+while values are raw bytes written to the same surface - so a single query
+language spans the control plane and the data plane without changing tools.
+
+## Query
+
+```sql
+SELECT name
+FROM cloudflare.kv.keys
+WHERE account_id = '{{account_id}}'
+AND namespace_id = '{{namespace_id}}';
+```
+
+## Listing and creating namespaces
+
+```sql
+SELECT id, title
+FROM cloudflare.kv.namespaces
+WHERE account_id = '{{account_id}}';
+```
+
+```sql
+INSERT INTO cloudflare.kv.namespaces (title, account_id)
+SELECT 'my-namespace', '{{account_id}}'
+RETURNING result;
+```
+
+## Writing and reading a value
+
+The write is a REPLACE and data__value carries the raw request body:
+
+```sql
+REPLACE cloudflare.kv.values
+SET data__value = 'hello from stackql'
+WHERE account_id = '{{account_id}}'
+AND namespace_id = '{{namespace_id}}'
+AND key_name = 'my-key';
+```
+
+```sql
+SELECT contents
+FROM cloudflare.kv.values
+WHERE account_id = '{{account_id}}'
+AND namespace_id = '{{namespace_id}}'
+AND key_name = 'my-key';
+```
+
+## Deleting a value and a namespace
+
+```sql
+DELETE FROM cloudflare.kv.values
+WHERE account_id = '{{account_id}}'
+AND namespace_id = '{{namespace_id}}'
+AND key_name = 'my-key';
+```
+
+```sql
+DELETE FROM cloudflare.kv.namespaces
+WHERE namespace_id = '{{namespace_id}}'
+AND account_id = '{{account_id}}';
+```
+
+## Notes
+
+data__value is mandatory on the value write and is deliberately not the same
+convention as the rest of the provider: the naive request-body transform is
+disabled for this method so that data__value can be splatted verbatim as an
+application/octet-stream body, which is what lets a value hold arbitrary
+bytes rather than JSON. The namespace create returns the new namespace inside
+a result document, so RETURNING result then reading the id out of it is the
+way to capture the id in one step - otherwise list namespaces and match on
+title. Reading a key that does not exist returns HTTP 404 with code 10009
+'key not found' rather than an empty result, so treat that error as the
+absence of a key rather than a failure. Deleting a namespace destroys every
+key in it and cannot be undone, so always scope the delete by namespace_id.
+The API token needs Account -> Workers KV Storage -> Edit for the writes.

@@ -1,0 +1,80 @@
+{
+  "id": "azure/compute/vm-custom-script-extension",
+  "title": "Azure VM custom script extension",
+  "description": "Runs a shell command on an existing VM via the CustomScript extension, and lists the extensions installed on a VM; the way to load content onto a server after provisioning.",
+  "mutation": false,
+  "verb": "select",
+  "status": "draft",
+  "providers": [
+    "azure"
+  ],
+  "services": [
+    "compute"
+  ],
+  "auth": [
+    "AZURE_TENANT_ID",
+    "AZURE_CLIENT_ID",
+    "AZURE_CLIENT_SECRET"
+  ],
+  "permissions": [
+    "Microsoft.Compute/virtualMachines/extensions/read"
+  ],
+  "params": [
+    {
+      "name": "subscription_id",
+      "type": "string",
+      "required": true,
+      "description": "Azure subscription id (GUID)",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    {
+      "name": "resource_group_name",
+      "type": "string",
+      "required": true,
+      "description": "Resource group containing the VM",
+      "example": "my-resource-group"
+    },
+    {
+      "name": "vm_name",
+      "type": "string",
+      "required": true,
+      "description": "Virtual machine to read extensions from",
+      "example": "my-vm"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "name",
+      "type": "string",
+      "description": "Extension name"
+    },
+    {
+      "name": "publisher",
+      "type": "string",
+      "description": "Extension publisher, e.g. Microsoft.Azure.Extensions"
+    },
+    {
+      "name": "type_handler_version",
+      "type": "string",
+      "description": "Handler version"
+    },
+    {
+      "name": "provisioning_state",
+      "type": "string",
+      "description": "Succeeded, Creating or Failed"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false,
+    "notes": "One call per VM"
+  },
+  "related": [
+    "azure/compute/vms-by-subscription",
+    "azure/network/public-ip-provision"
+  ],
+  "template": "SELECT\nname,\npublisher,\ntype_handler_version,\nprovisioning_state\nFROM azure.compute.virtual_machine_extensions\nWHERE subscription_id = '{{subscription_id}}'\nAND resource_group_name = '{{resource_group_name}}'\nAND vm_name = '{{vm_name}}';",
+  "notes": "The extension is a child resource, so every statement carries both vm_name and vm_extension_name, and the create additionally requires location - which must match the VM's region. publisher, type and typeHandlerVersion go inside the properties document, not as columns. The command runs as root and its output is not returned by the API: check provisioning_state to see whether the extension succeeded, then verify the effect out of band, for example by requesting the port the script opened. Reaching that port also needs a network security group rule allowing it and a public IP attached to the VM's NIC - the extension itself opens no firewall. Use the settings key for non-sensitive parameters and protectedSettings for anything secret, since settings is readable back from the API. This entry is draft: the read and delete shapes are confirmed against the provider but the install has not been executed, because no VM could be provisioned on the test subscription.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/azure/compute/vm-custom-script-extension"
+}

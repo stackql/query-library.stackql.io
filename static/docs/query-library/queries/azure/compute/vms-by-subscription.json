@@ -1,10 +1,10 @@
 {
   "id": "azure/compute/vms-by-subscription",
   "title": "Azure VMs in a subscription",
-  "description": "Lists all virtual machines across a subscription with name, location and tags.",
+  "description": "Lists virtual machines across a subscription with name, location, provisioning state and the profiles describing size, image and networking.",
   "mutation": false,
   "verb": "select",
-  "status": "draft",
+  "status": "stable",
   "providers": [
     "azure"
   ],
@@ -38,12 +38,22 @@
     {
       "name": "location",
       "type": "string",
-      "description": "Azure region"
+      "description": "Region"
     },
     {
-      "name": "properties",
-      "type": "object",
-      "description": "VM properties including vmId, hardwareProfile and provisioningState"
+      "name": "provisioning_state",
+      "type": "string",
+      "description": "Succeeded, Creating, Updating or Failed"
+    },
+    {
+      "name": "vm_id",
+      "type": "string",
+      "description": "Stable unique VM identifier"
+    },
+    {
+      "name": "vm_size",
+      "type": "string",
+      "description": "SKU name extracted from hardware_profile"
     },
     {
       "name": "tags",
@@ -57,9 +67,11 @@
     "notes": "One list call per subscription when swept tenant-wide"
   },
   "related": [
-    "azure/subscription/subscriptions-list"
+    "azure/resource/resource-groups-lifecycle",
+    "azure/network/vnet-subnet-provision"
   ],
-  "template": "SELECT name, location, properties, tags FROM azure.compute.virtual_machines WHERE subscriptionId = '{{subscription_id}}';",
-  "notes": "Filtering by subscriptionId alone routes to the listAll operation. Power state is not in the list response; it comes from the instance_view operation per VM (EXEC azure.compute.virtual_machines.instance_view). Extract vmSize from properties with JSON extraction.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/azure/compute/vms-by-subscription"
+  "template": "SELECT\nname,\nlocation,\nprovisioning_state,\nvm_id,\nJSON_EXTRACT(hardware_profile, '$.vmSize') as vm_size,\ntags\nFROM azure.compute.virtual_machines\nWHERE subscription_id = '{{subscription_id}}';",
+  "notes": "Filtering by subscription_id alone routes to the list-all operation; adding resource_group_name narrows it to a group. provisioning_state describes the control-plane deployment, not whether the machine is running - the power state comes from the per-VM instance view rather than the list response, so a VM reading Succeeded here may still be stopped. The profile columns (hardware_profile, storage_profile, os_profile, network_profile) are JSON objects: extract the size with JSON_EXTRACT(hardware_profile, '$.vmSize') and the image with JSON_EXTRACT(storage_profile, '$.imageReference.sku'). An empty result means the subscription has no VMs, which is a valid answer rather than a failure.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/azure/compute/vms-by-subscription",
+  "last_verified": "2026-07-30"
 }

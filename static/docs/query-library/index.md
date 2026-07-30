@@ -6,7 +6,7 @@
 > (`<id>.json`) consumed by the stackql MCP server's `query_library_search`
 > and `query_library_get` tools.
 
-Build `ql-8d8d8adb73d86ce4` | 35 entries | machine catalogue:
+Build `ql-8fb30b882934e7b6` | 45 entries | machine catalogue:
 [index.json](https://stackql.io/docs/query-library/index.json) |
 [manifest.json](https://stackql.io/docs/query-library/manifest.json)
 
@@ -36,13 +36,23 @@ Build `ql-8d8d8adb73d86ce4` | 35 entries | machine catalogue:
 
 ## azure
 
-- [Azure VMs in a subscription](https://stackql.io/docs/query-library/queries/azure/compute/vms-by-subscription) (select; draft; params: subscription_id): Lists all virtual machines across a subscription with name, location and tags.
-- [Azure storage accounts security posture](https://stackql.io/docs/query-library/queries/azure/storage/storage-accounts-security) (select; draft; params: subscription_id): Lists storage accounts in a subscription with public access, TLS and HTTPS-only settings flattened.
-- [Azure subscriptions](https://stackql.io/docs/query-library/queries/azure/subscription/subscriptions-list) (select): Lists subscriptions visible to the credential, tenant-wide; audit only Enabled subscriptions.
+- [Azure VM custom script extension](https://stackql.io/docs/query-library/queries/azure/compute/vm-custom-script-extension) (select; draft; params: subscription_id, resource_group_name, vm_name): Runs a shell command on an existing VM via the CustomScript extension, and lists the extensions installed on a VM; the way to load content onto a server after provisioning.
+- [Azure VMs in a subscription](https://stackql.io/docs/query-library/queries/azure/compute/vms-by-subscription) (select; params: subscription_id): Lists virtual machines across a subscription with name, location, provisioning state and the profiles describing size, image and networking.
+- [Azure Cosmos DB table lifecycle](https://stackql.io/docs/query-library/queries/azure/cosmosdb/table-lifecycle) (select; params: subscription_id, resource_group_name, account_name): Provisions a serverless Cosmos DB account with the Table API, creates and lists tables, and tears them down; the control-plane half of a Table workload.
+- [Azure public IP address provisioning](https://stackql.io/docs/query-library/queries/azure/network/public-ip-provision) (select; params: subscription_id, resource_group_name): Lists public IP addresses in a resource group, and creates or deletes a static Standard SKU address for attaching to a NIC or load balancer.
+- [Azure virtual network and subnet provisioning](https://stackql.io/docs/query-library/queries/azure/network/vnet-subnet-provision) (select; params: subscription_id, resource_group_name): Creates a virtual network and subnet, and lists them with their address ranges; the network substrate VMs and private endpoints attach to.
+- [Azure resource group lifecycle](https://stackql.io/docs/query-library/queries/azure/resource/resource-groups-lifecycle) (select; params: subscription_id): Lists resource groups in a subscription, and creates or deletes one; the container every other Azure resource lives in.
+- [Azure storage account and blob container provisioning](https://stackql.io/docs/query-library/queries/azure/storage/storage-account-provision) (select; params: subscription_id): Lists storage accounts in a subscription, and creates an account with a private blob container; the object storage substrate.
+- [Azure subscription detail](https://stackql.io/docs/query-library/queries/azure/subscription/subscriptions-list) (select; draft; params: subscription_id): Reads a subscription's name and state; requires owner-level rights, so most service principals cannot call it.
 
 ## cloudflare
 
-- [Cloudflare zones](https://stackql.io/docs/query-library/queries/cloudflare/zones/zones-list) (select; draft): Lists all Cloudflare zones visible to the token with status and pause state.
+- [Cloudflare API token creation and scope management](https://stackql.io/docs/query-library/queries/cloudflare/accounts/api-token-lifecycle) (select; params: account_id): Looks up permission group ids by name and mints or rescopes an account API token from them; builds least-privilege tokens without hardcoding UUIDs.
+- [Cloudflare edge IP ranges](https://stackql.io/docs/query-library/queries/cloudflare/ips/edge-ip-ranges) (select): Returns Cloudflare's published IPv4 and IPv6 edge ranges as one CIDR per row; the source list for origin firewall allowlists.
+- [Cloudflare KV namespace and value lifecycle](https://stackql.io/docs/query-library/queries/cloudflare/kv/kv-lifecycle) (select; params: account_id, namespace_id): Creates a KV namespace, writes and reads a value, lists keys and deletes both; the full control-plane to data-plane cycle in one surface.
+- [Cloudflare rate limit ruleset](https://stackql.io/docs/query-library/queries/cloudflare/rulesets/rate-limit-ruleset) (select; draft; params: zone_id): Reads the rate limiting rules on a zone's http_ratelimit phase, and sets or clears them; the entrypoint ruleset pattern used for edge throttling.
+- [Cloudflare HTTP request analytics by country and status](https://stackql.io/docs/query-library/queries/cloudflare/zones/http-analytics) (select; params: zone_tag, since, until): Returns HTTP request volume for a zone grouped by minute, country, method and response status; the GraphQL analytics replacement for the sunset dashboard endpoint.
+- [Cloudflare zones](https://stackql.io/docs/query-library/queries/cloudflare/zones/zones-list) (select): Lists all Cloudflare zones visible to the API token with status and pause state; the zone id keys every per-zone API.
 
 ## databricks
 

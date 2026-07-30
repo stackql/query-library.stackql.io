@@ -1,0 +1,66 @@
+{
+  "id": "azure/cosmosdb/table-lifecycle",
+  "title": "Azure Cosmos DB table lifecycle",
+  "description": "Provisions a serverless Cosmos DB account with the Table API, creates and lists tables, and tears them down; the control-plane half of a Table workload.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "azure"
+  ],
+  "services": [
+    "cosmosdb"
+  ],
+  "auth": [
+    "AZURE_TENANT_ID",
+    "AZURE_CLIENT_ID",
+    "AZURE_CLIENT_SECRET"
+  ],
+  "permissions": [
+    "Microsoft.DocumentDB/databaseAccounts/read"
+  ],
+  "params": [
+    {
+      "name": "subscription_id",
+      "type": "string",
+      "required": true,
+      "description": "Azure subscription id (GUID)",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    {
+      "name": "resource_group_name",
+      "type": "string",
+      "required": true,
+      "description": "Resource group containing the Cosmos DB account",
+      "example": "my-resource-group"
+    },
+    {
+      "name": "account_name",
+      "type": "string",
+      "required": true,
+      "description": "Cosmos DB account name, globally unique and lowercase",
+      "example": "mycosmosaccount"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "name",
+      "type": "string",
+      "description": "Table name"
+    }
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false,
+    "notes": "A serverless account bills per request rather than per hour, but the account itself persists until deleted"
+  },
+  "related": [
+    "azure/resource/resource-groups-lifecycle",
+    "azure/storage/storage-account-provision"
+  ],
+  "template": "SELECT name\nFROM azure.cosmosdb.table_resources\nWHERE subscription_id = '{{subscription_id}}'\nAND resource_group_name = '{{resource_group_name}}'\nAND account_name = '{{account_name}}';",
+  "notes": "The table id is given twice on create - once as the table_name parameter that builds the URL and once inside the resource object in the body - and the two must agree. Account provisioning is asynchronous and typically takes a minute or two, so poll provisioning_state rather than creating a table immediately after the insert returns. On a serverless account the keyed single-table read (adding table_name to the list query) fails with BadRequest and the message that reading or replacing offers is not supported for serverless accounts, because that path also reads the throughput offer; list the tables and filter client-side instead. Account names are globally unique and lowercase. Deleting the account or its resource group removes every table with it. Table row operations are a separate data-plane surface reached through azure.data_tables against the account's own endpoint rather than through Resource Manager, and authenticate independently of these control-plane calls.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/azure/cosmosdb/table-lifecycle",
+  "last_verified": "2026-07-30"
+}

@@ -1,10 +1,10 @@
 {
   "id": "cloudflare/zones/zones-list",
   "title": "Cloudflare zones",
-  "description": "Lists all Cloudflare zones visible to the token with status and pause state.",
+  "description": "Lists all Cloudflare zones visible to the API token with status and pause state; the zone id keys every per-zone API.",
   "mutation": false,
   "verb": "select",
-  "status": "draft",
+  "status": "stable",
   "providers": [
     "cloudflare"
   ],
@@ -19,7 +19,7 @@
     {
       "name": "id",
       "type": "string",
-      "description": "Zone identifier (needed by every per-zone API)"
+      "description": "Zone identifier, needed by every per-zone API"
     },
     {
       "name": "name",
@@ -41,7 +41,12 @@
     "fan_out": "account",
     "expensive": false
   },
-  "template": "SELECT id, name, status, paused FROM cloudflare.zones.zones;",
-  "notes": "No parameters: scoping comes entirely from the token. A zone with status active but paused = true is proxied through DNS only, with Cloudflare features bypassed.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/cloudflare/zones/zones-list"
+  "related": [
+    "cloudflare/zones/http-analytics",
+    "cloudflare/kv/kv-lifecycle"
+  ],
+  "template": "SELECT id, name, status, paused\nFROM cloudflare.zones.zones;",
+  "notes": "No parameters: scoping comes entirely from the token, so a token restricted to one zone returns one row and an account-wide token returns them all. A zone with status active but paused = true is resolving through Cloudflare DNS only, with proxying and all edge features bypassed - a common cause of \"security settings are configured but not taking effect\". Statuses other than active mean the zone is not yet serving: pending is awaiting nameserver delegation and initializing is provisioning. Cloudflare API tokens are scoped per permission group, so a token that lists zones successfully may still fail with an authentication error on DNS records or analytics; grant each surface explicitly rather than assuming zone access implies the rest.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/cloudflare/zones/zones-list",
+  "last_verified": "2026-07-30"
 }
