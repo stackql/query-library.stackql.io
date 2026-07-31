@@ -16,6 +16,7 @@
     "AWS_SECRET_ACCESS_KEY"
   ],
   "permissions": [
+    "cloudformation:GetResource",
     "s3:GetBucketPublicAccessBlock",
     "s3:GetBucketOwnershipControls"
   ],
