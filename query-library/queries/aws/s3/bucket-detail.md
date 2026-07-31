@@ -12,7 +12,7 @@ intent_keywords:
   - bucket security settings
   - s3 bucket detail
 auth: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-permissions: ["cloudformation:GetResource", "s3:GetBucketPublicAccessBlock", "s3:GetEncryptionConfiguration", "s3:GetBucketVersioning", "s3:GetBucketOwnershipControls", "s3:GetBucketLogging"]
+permissions: ["s3:GetBucketPublicAccessBlock", "s3:GetEncryptionConfiguration", "s3:GetBucketVersioning", "s3:GetBucketOwnershipControls", "s3:GetBucketLogging"]
 params:
   - name: region
     type: identifier
