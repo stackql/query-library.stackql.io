@@ -106,7 +106,8 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        overrides = json.loads(args.params_json)
+        # An unset secret reaches us as an empty env var; treat blank as no overrides.
+        overrides = json.loads(args.params_json.strip() or "{}")
     except json.JSONDecodeError as e:
         print(f"nightly-verify: bad params JSON: {e}", file=sys.stderr)
         return 1

@@ -105,6 +105,23 @@ python query-library/scripts/build-artifacts.py
 Commit the regenerated files under `static/docs/query-library/` together with your
 entry. CI fails the PR if the committed artifacts do not match the sources.
 
+### Pre-commit hooks (optional but recommended)
+
+The repo ships a `.pre-commit-config.yaml` that runs the same validation and
+artifact-freshness checks at commit time, so you find out in seconds instead
+of at CI. One-time setup per clone:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The hooks only fire when a commit touches `query-library/` or the committed
+artifacts. On a freshness failure the hook has already regenerated the
+artifacts in your working tree - review them, `git add` them, and commit
+again. The hooks install their own Python dependencies, and CI enforces the
+same checks regardless, so skipping this setup just means slower feedback.
+
 ## What CI checks
 
 Per PR:
