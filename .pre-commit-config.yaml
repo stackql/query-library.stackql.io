@@ -1,0 +1,29 @@
+# Pre-commit hooks for the query library pipeline.
+#
+# One-time setup per clone:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Hooks run only when staged files touch the library sources or the
+# committed artifacts. Both use language: python with the pipeline's
+# dependencies (keep additional_dependencies in sync with
+# query-library/scripts/requirements.txt), so no local pip install of the
+# requirements is needed. CI enforces the same checks either way; the hooks
+# just fail faster.
+repos:
+  - repo: local
+    hooks:
+      - id: query-library-validate
+        name: query library structural validation
+        entry: python query-library/scripts/validate.py
+        language: python
+        additional_dependencies: ["PyYAML>=6.0", "jsonschema>=4.17"]
+        files: ^query-library/
+        pass_filenames: false
+      - id: query-library-artifacts
+        name: query library artifacts freshness
+        entry: python query-library/scripts/precommit-artifacts.py
+        language: python
+        additional_dependencies: ["PyYAML>=6.0", "jsonschema>=4.17"]
+        files: ^(query-library/|static/docs/query-library/)
+        pass_filenames: false

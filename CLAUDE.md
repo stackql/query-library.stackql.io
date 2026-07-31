@@ -222,6 +222,10 @@ silently diverge from the committed artifact.
 python query-library/scripts/validate.py
 python query-library/scripts/build-artifacts.py
 
+# Optional commit-time enforcement of the two commands above
+# (.pre-commit-config.yaml; per-clone opt-in)
+pip install pre-commit && pre-commit install
+
 # Site (no env vars needed)
 yarn start      # dev server - no postBuild AEO outputs, no JSON-LD
 yarn build      # full production build
