@@ -1,10 +1,10 @@
 {
   "id": "databricks/provisioning/workspaces-list",
   "title": "Databricks workspaces in an account",
-  "description": "Lists all Databricks workspaces in an account with cloud, region and provisioning status.",
+  "description": "Lists Databricks workspaces via the provider's vw_workspaces view with status, cloud placement and pricing tier; the account-level inventory entry point.",
   "mutation": false,
   "verb": "select",
-  "status": "draft",
+  "status": "stable",
   "providers": [
     "databricks_account"
   ],
@@ -29,7 +29,7 @@
     {
       "name": "workspace_id",
       "type": "integer",
-      "description": "Numeric workspace id"
+      "description": "Numeric workspace id, the key for per-workspace queries"
     },
     {
       "name": "workspace_name",
@@ -37,9 +37,14 @@
       "description": "Workspace display name"
     },
     {
+      "name": "workspace_status",
+      "type": "string",
+      "description": "RUNNING, PROVISIONING, FAILED or CANCELLING"
+    },
+    {
       "name": "cloud",
       "type": "string",
-      "description": "aws, azure or gcp"
+      "description": "Cloud provider hosting the workspace"
     },
     {
       "name": "aws_region",
@@ -49,24 +54,24 @@
     {
       "name": "location",
       "type": "string",
-      "description": "Region for GCP-hosted workspaces"
-    },
-    {
-      "name": "workspace_status",
-      "type": "string",
-      "description": "RUNNING, PROVISIONING, FAILED, etc."
+      "description": "Region for Azure or GCP-hosted workspaces"
     },
     {
       "name": "pricing_tier",
       "type": "string",
-      "description": "Workspace pricing tier"
+      "description": "STANDARD, PREMIUM or ENTERPRISE"
     }
   ],
   "cost": {
     "fan_out": "account",
     "expensive": false
   },
-  "template": "SELECT workspace_id, workspace_name, cloud, aws_region, location, workspace_status, pricing_tier FROM databricks_account.provisioning.workspaces WHERE account_id = '{{account_id}}';",
-  "notes": "The region column differs by cloud: aws_region for AWS workspaces, location for GCP, and azure_workspace_info for Azure. Per-workspace resources (clusters, jobs, catalogs) live in the separate databricks_workspace provider keyed by deployment_name.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/databricks/provisioning/workspaces-list"
+  "related": [
+    "databricks/provisioning/account-infrastructure",
+    "databricks/iam/workspace-assignments"
+  ],
+  "template": "SELECT\nworkspace_id,\nworkspace_name,\nworkspace_status,\ncloud,\naws_region,\nlocation,\npricing_tier\nFROM databricks_account.provisioning.vw_workspaces\nWHERE account_id = '{{account_id}}';",
+  "notes": "The region column that carries a value depends on the cloud: aws_region is populated for AWS-hosted workspaces while location carries it for Azure and GCP, and cloud itself is often null on AWS accounts, so treat the presence of aws_region as the AWS signal rather than testing cloud. workspace_id is a numeric id, not a GUID, and it is the key for every per-workspace query - including the account-level assignment views. Creation is asynchronous: workspace_status moves through PROVISIONING to RUNNING, so poll this view rather than assuming the insert completed the workspace. Per-workspace resources such as clusters, jobs and catalogs live in the separate databricks_workspace provider, which authenticates against the workspace host rather than the account, so an account-level credential alone will not reach them.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/databricks/provisioning/workspaces-list",
+  "last_verified": "2026-07-31"
 }

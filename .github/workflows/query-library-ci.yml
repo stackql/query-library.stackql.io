@@ -17,9 +17,9 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -41,12 +41,13 @@ jobs:
             exit 1
           fi
 
-      - name: Install stackql
-        run: |
-          curl -fsSL https://releases.stackql.io/stackql/latest/stackql_linux_amd64.zip -o /tmp/stackql.zip
-          unzip -o /tmp/stackql.zip -d "$HOME/stackql-bin"
-          chmod +x "$HOME/stackql-bin/stackql"
-          "$HOME/stackql-bin/stackql" --version
+      # Our own action, rather than hand-rolling the download: it resolves the
+      # latest release, caches the binary and puts it on PATH, so render-check
+      # finds it via shutil.which without a path being threaded through.
+      - name: Setup stackql
+        uses: stackql/setup-stackql@v2
+        with:
+          use_wrapper: false
 
       - name: Render templates and run stackql preprocessor check (no execution)
-        run: python query-library/scripts/render-check.py --stackql-bin "$HOME/stackql-bin/stackql" --require-binary
+        run: python query-library/scripts/render-check.py --require-binary

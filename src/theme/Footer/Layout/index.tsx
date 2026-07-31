@@ -8,6 +8,7 @@
 import React from 'react';
 import clsx from 'clsx';
 import type {Props} from '@theme/Footer/Layout';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import type { JSX } from 'react';
 
 export default function FooterLayout({
@@ -33,8 +34,8 @@ export default function FooterLayout({
                     A new approach to querying and provisioning cloud services.
                   </p>
                   <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', alignItems: 'center' }}>
-                    <img src="/img/aaif_memberbadge_silver.svg" alt="AAIF Member" style={{ height: '50px' }} />
-                    <img src="/img/LF_MemberLevel_silver.svg" alt="Linux Foundation Member" style={{ height: '50px' }} />
+                    <img src={useBaseUrl('/img/aaif_memberbadge_silver.svg')} alt="AAIF Member" style={{ height: '50px' }} />
+                    <img src={useBaseUrl('/img/LF_MemberLevel_silver.svg')} alt="Linux Foundation Member" style={{ height: '50px' }} />
                   </div>
                 </div>
               </div>

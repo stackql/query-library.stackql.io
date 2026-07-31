@@ -129,10 +129,10 @@ function Footer(): React.ReactElement | null {
               </p>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
                 <Link href="https://aaif.io/members/" className={styles.footerLogoLink} target="_blank" rel="noopener">
-                  <img src="/img/aaif_memberbadge_silver.svg" alt="AAIF Member" style={{ height: '90px' }} />
+                  <img src={useBaseUrl('/img/aaif_memberbadge_silver.svg')} alt="AAIF Member" style={{ height: '90px' }} />
                 </Link>
                 <Link href="https://www.linuxfoundation.org/about/members" className={styles.footerLogoLink} target="_blank" rel="noopener">
-                  <img src="/img/LF_MemberLevel_silver.svg" alt="Linux Foundation Member" style={{ height: '90px' }} />
+                  <img src={useBaseUrl('/img/LF_MemberLevel_silver.svg')} alt="Linux Foundation Member" style={{ height: '90px' }} />
                 </Link>
               </div>
             </div>

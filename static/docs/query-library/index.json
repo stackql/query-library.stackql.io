@@ -1,5 +1,5 @@
 {
-  "build_id": "ql-8fb30b882934e7b6",
+  "build_id": "ql-ea4d2cbf5ec44568",
   "entries": [
     {
       "id": "aws/cloud_control/resource-request-by-token",
@@ -1246,9 +1246,83 @@
       "required_params": []
     },
     {
+      "id": "databricks/iam/workspace-assignments",
+      "title": "Databricks workspace access assignments",
+      "description": "Lists the principals assigned to a Databricks workspace with their permission level, resolving users, groups and service principals into one view.",
+      "providers": [
+        "databricks_account"
+      ],
+      "services": [
+        "iam"
+      ],
+      "tags": [
+        "databricks",
+        "iam",
+        "security",
+        "identity",
+        "access",
+        "views"
+      ],
+      "keywords": [
+        "workspace assignment",
+        "who has access",
+        "admin permission",
+        "service principal",
+        "entitlements"
+      ],
+      "intent_keywords": [
+        "who has access to my databricks workspace",
+        "list workspace admins",
+        "databricks workspace permissions"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "account_id",
+        "workspace_id"
+      ]
+    },
+    {
+      "id": "databricks/provisioning/account-infrastructure",
+      "title": "Databricks account credentials and storage configurations",
+      "description": "Lists the cross-account credentials and root storage configurations registered in a Databricks account; the prerequisites a workspace is built from.",
+      "providers": [
+        "databricks_account"
+      ],
+      "services": [
+        "provisioning"
+      ],
+      "tags": [
+        "databricks",
+        "provisioning",
+        "inventory",
+        "iam",
+        "views"
+      ],
+      "keywords": [
+        "cross account role",
+        "credentials id",
+        "storage configuration",
+        "root bucket",
+        "workspace prerequisites"
+      ],
+      "intent_keywords": [
+        "list databricks credentials",
+        "what storage configurations exist",
+        "databricks cross account roles"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "account_id"
+      ]
+    },
+    {
       "id": "databricks/provisioning/workspaces-list",
       "title": "Databricks workspaces in an account",
-      "description": "Lists all Databricks workspaces in an account with cloud, region and provisioning status.",
+      "description": "Lists Databricks workspaces via the provider's vw_workspaces view with status, cloud placement and pricing tier; the account-level inventory entry point.",
       "providers": [
         "databricks_account"
       ],
@@ -1258,12 +1332,14 @@
       "tags": [
         "databricks",
         "workspaces",
-        "inventory"
+        "inventory",
+        "views"
       ],
       "keywords": [
         "workspace list",
         "databricks account",
-        "workspace inventory"
+        "workspace inventory",
+        "provisioning status"
       ],
       "intent_keywords": [
         "list databricks workspaces",
@@ -1272,7 +1348,7 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": [
         "account_id"
       ]
@@ -1462,7 +1538,7 @@
     {
       "id": "google/cloudresourcemanager/projects-by-parent",
       "title": "GCP projects under an org or folder",
-      "description": "Lists projects under a parent organization or folder; audit only ACTIVE projects.",
+      "description": "Lists projects directly under a parent organization or folder with state, display name and labels; the fan-out dimension for any org-wide GCP audit.",
       "providers": [
         "google"
       ],
@@ -1478,7 +1554,8 @@
       "keywords": [
         "project list",
         "org descent",
-        "gcp projects"
+        "gcp projects",
+        "project state"
       ],
       "intent_keywords": [
         "list gcp projects",
@@ -1494,8 +1571,8 @@
     },
     {
       "id": "google/compute/instances-by-zone",
-      "title": "GCE instances in a zone",
-      "description": "Lists Compute Engine instances in one project and zone with status, machine type and creation time.",
+      "title": "GCE instances in a project",
+      "description": "Lists Compute Engine instances across every zone in a project in one call, with status, machine type and placement.",
       "providers": [
         "google"
       ],
@@ -1511,7 +1588,8 @@
       "keywords": [
         "gce inventory",
         "vm list",
-        "compute instances"
+        "compute instances",
+        "aggregated list"
       ],
       "intent_keywords": [
         "list gce instances",
@@ -1520,16 +1598,15 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": [
-        "project",
-        "zone"
+        "project"
       ]
     },
     {
       "id": "google/iam/service-accounts-by-project",
       "title": "GCP service accounts in a project",
-      "description": "Lists IAM service accounts in one project with email, display name and disabled state.",
+      "description": "Lists IAM service accounts in one project with email, display name and unique id; the workload principal inventory for a privilege audit.",
       "providers": [
         "google"
       ],
@@ -1547,7 +1624,8 @@
       "keywords": [
         "service account list",
         "robot accounts",
-        "sa inventory"
+        "sa inventory",
+        "workload identity"
       ],
       "intent_keywords": [
         "list gcp service accounts",
@@ -1556,7 +1634,7 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": [
         "project"
       ]
@@ -1564,7 +1642,7 @@
     {
       "id": "google/storage/buckets-by-project",
       "title": "GCS buckets in a project",
-      "description": "Lists Cloud Storage buckets in one project with location, storage class and creation time.",
+      "description": "Lists Cloud Storage buckets in one project with location, storage class and creation time; the per-project storage inventory.",
       "providers": [
         "google"
       ],
@@ -1580,7 +1658,8 @@
       "keywords": [
         "gcs inventory",
         "bucket list",
-        "cloud storage buckets"
+        "cloud storage buckets",
+        "storage class"
       ],
       "intent_keywords": [
         "list gcs buckets",
@@ -1589,7 +1668,7 @@
       ],
       "mutation": false,
       "verb": "select",
-      "status": "draft",
+      "status": "stable",
       "required_params": [
         "project"
       ]

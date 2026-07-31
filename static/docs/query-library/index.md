@@ -6,7 +6,7 @@
 > (`<id>.json`) consumed by the stackql MCP server's `query_library_search`
 > and `query_library_get` tools.
 
-Build `ql-8fb30b882934e7b6` | 45 entries | machine catalogue:
+Build `ql-ea4d2cbf5ec44568` | 47 entries | machine catalogue:
 [index.json](https://stackql.io/docs/query-library/index.json) |
 [manifest.json](https://stackql.io/docs/query-library/manifest.json)
 
@@ -56,7 +56,9 @@ Build `ql-8fb30b882934e7b6` | 45 entries | machine catalogue:
 
 ## databricks
 
-- [Databricks workspaces in an account](https://stackql.io/docs/query-library/queries/databricks/provisioning/workspaces-list) (select; draft; params: account_id): Lists all Databricks workspaces in an account with cloud, region and provisioning status.
+- [Databricks workspace access assignments](https://stackql.io/docs/query-library/queries/databricks/iam/workspace-assignments) (select; params: account_id, workspace_id): Lists the principals assigned to a Databricks workspace with their permission level, resolving users, groups and service principals into one view.
+- [Databricks account credentials and storage configurations](https://stackql.io/docs/query-library/queries/databricks/provisioning/account-infrastructure) (select; params: account_id): Lists the cross-account credentials and root storage configurations registered in a Databricks account; the prerequisites a workspace is built from.
+- [Databricks workspaces in an account](https://stackql.io/docs/query-library/queries/databricks/provisioning/workspaces-list) (select; params: account_id): Lists Databricks workspaces via the provider's vw_workspaces view with status, cloud placement and pricing tier; the account-level inventory entry point.
 
 ## github
 
@@ -68,7 +70,7 @@ Build `ql-8fb30b882934e7b6` | 45 entries | machine catalogue:
 
 ## google
 
-- [GCP projects under an org or folder](https://stackql.io/docs/query-library/queries/google/cloudresourcemanager/projects-by-parent) (select; params: parent): Lists projects under a parent organization or folder; audit only ACTIVE projects.
-- [GCE instances in a zone](https://stackql.io/docs/query-library/queries/google/compute/instances-by-zone) (select; draft; params: project, zone): Lists Compute Engine instances in one project and zone with status, machine type and creation time.
-- [GCP service accounts in a project](https://stackql.io/docs/query-library/queries/google/iam/service-accounts-by-project) (select; draft; params: project): Lists IAM service accounts in one project with email, display name and disabled state.
-- [GCS buckets in a project](https://stackql.io/docs/query-library/queries/google/storage/buckets-by-project) (select; draft; params: project): Lists Cloud Storage buckets in one project with location, storage class and creation time.
+- [GCP projects under an org or folder](https://stackql.io/docs/query-library/queries/google/cloudresourcemanager/projects-by-parent) (select; params: parent): Lists projects directly under a parent organization or folder with state, display name and labels; the fan-out dimension for any org-wide GCP audit.
+- [GCE instances in a project](https://stackql.io/docs/query-library/queries/google/compute/instances-by-zone) (select; params: project): Lists Compute Engine instances across every zone in a project in one call, with status, machine type and placement.
+- [GCP service accounts in a project](https://stackql.io/docs/query-library/queries/google/iam/service-accounts-by-project) (select; params: project): Lists IAM service accounts in one project with email, display name and unique id; the workload principal inventory for a privilege audit.
+- [GCS buckets in a project](https://stackql.io/docs/query-library/queries/google/storage/buckets-by-project) (select; params: project): Lists Cloud Storage buckets in one project with location, storage class and creation time; the per-project storage inventory.

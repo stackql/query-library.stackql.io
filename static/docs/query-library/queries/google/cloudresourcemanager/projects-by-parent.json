@@ -1,7 +1,7 @@
 {
   "id": "google/cloudresourcemanager/projects-by-parent",
   "title": "GCP projects under an org or folder",
-  "description": "Lists projects under a parent organization or folder; audit only ACTIVE projects.",
+  "description": "Lists projects directly under a parent organization or folder with state, display name and labels; the fan-out dimension for any org-wide GCP audit.",
   "mutation": false,
   "verb": "select",
   "status": "stable",
@@ -23,7 +23,7 @@
       "type": "string",
       "required": true,
       "description": "Parent container: organizations/<org_id> or folders/<folder_id>",
-      "example": "organizations/123456789012",
+      "example": "organizations/141318256085",
       "pattern": "^(organizations|folders)/[0-9]+$"
     }
   ],
@@ -31,7 +31,17 @@
     {
       "name": "projectId",
       "type": "string",
-      "description": "Project identifier"
+      "description": "Project identifier used by every other GCP query"
+    },
+    {
+      "name": "displayName",
+      "type": "string",
+      "description": "Human-readable project name"
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "description": "ACTIVE or DELETE_REQUESTED"
     },
     {
       "name": "parent",
@@ -39,16 +49,27 @@
       "description": "Parent organization or folder"
     },
     {
-      "name": "state",
+      "name": "createTime",
       "type": "string",
-      "description": "ACTIVE or DELETE_REQUESTED"
+      "description": "Creation timestamp"
+    },
+    {
+      "name": "labels",
+      "type": "object",
+      "description": "Project labels"
     }
   ],
   "cost": {
     "fan_out": "none",
     "expensive": false
   },
-  "template": "SELECT projectId, parent, state FROM google.cloudresourcemanager.projects WHERE parent = '{{parent}}';",
-  "notes": "Recurse into ACTIVE folders via google.cloudresourcemanager.folders with the same parent form to descend a whole organization.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/google/cloudresourcemanager/projects-by-parent"
+  "related": [
+    "google/storage/buckets-by-project",
+    "google/iam/service-accounts-by-project",
+    "google/compute/instances-by-zone"
+  ],
+  "template": "SELECT projectId, displayName, state, parent, createTime, labels\nFROM google.cloudresourcemanager.projects\nWHERE parent = '{{parent}}';",
+  "notes": "This is the v3 Resource Manager API, where the state column is called state and carries ACTIVE or DELETE_REQUESTED - the v1 name lifecycleState no longer exists and selecting it fails with a no such column error. parent is mandatory for the listing form: omitting it fails with HTTP 400 and 'field [parent] has issue [invalid parent name]' rather than listing everything the credential can see. The listing is not recursive - it returns only the projects immediately under the container, so descend a hierarchy by recursing through google.cloudresourcemanager.folders with the same parent form. Filter to state = 'ACTIVE' before fanning out, since DELETE_REQUESTED projects still appear but reject most API calls.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/google/cloudresourcemanager/projects-by-parent",
+  "last_verified": "2026-07-31"
 }

@@ -14,21 +14,22 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
       - name: Install script dependencies
         run: pip install -r query-library/scripts/requirements.txt
 
-      - name: Install stackql
-        run: |
-          curl -fsSL https://releases.stackql.io/stackql/latest/stackql_linux_amd64.zip -o /tmp/stackql.zip
-          unzip -o /tmp/stackql.zip -d "$HOME/stackql-bin"
-          chmod +x "$HOME/stackql-bin/stackql"
-          "$HOME/stackql-bin/stackql" --version
+      # Our own action, rather than hand-rolling the download: it resolves the
+      # latest release, caches the binary and puts it on PATH, so the verify
+      # script finds it via shutil.which without a path being threaded through.
+      - name: Setup stackql
+        uses: stackql/setup-stackql@v2
+        with:
+          use_wrapper: false
 
       - name: Execute read-only entries against sandbox credentials
         env:
@@ -46,7 +47,6 @@ jobs:
           QUERY_LIBRARY_VERIFY_PARAMS: ${{ secrets.QUERY_LIBRARY_VERIFY_PARAMS }}
         run: |
           python query-library/scripts/nightly-verify.py \
-            --stackql-bin "$HOME/stackql-bin/stackql" \
             --report nightly-verify-report.json
 
       - name: Regenerate artifacts

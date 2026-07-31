@@ -1,0 +1,80 @@
+{
+  "id": "databricks/iam/workspace-assignments",
+  "title": "Databricks workspace access assignments",
+  "description": "Lists the principals assigned to a Databricks workspace with their permission level, resolving users, groups and service principals into one view.",
+  "mutation": false,
+  "verb": "select",
+  "status": "stable",
+  "providers": [
+    "databricks_account"
+  ],
+  "services": [
+    "iam"
+  ],
+  "auth": [
+    "DATABRICKS_CLIENT_ID",
+    "DATABRICKS_CLIENT_SECRET"
+  ],
+  "params": [
+    {
+      "name": "account_id",
+      "type": "string",
+      "required": true,
+      "description": "Databricks account id (GUID)",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    {
+      "name": "workspace_id",
+      "type": "string",
+      "required": true,
+      "description": "Numeric workspace id from the workspace inventory",
+      "example": "7474653260057820"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "principal_id",
+      "type": "string",
+      "description": "Numeric id of the assigned principal"
+    },
+    {
+      "name": "display_name",
+      "type": "string",
+      "description": "Human-readable principal name"
+    },
+    {
+      "name": "user_name",
+      "type": "string",
+      "description": "Email when the principal is a user, otherwise null"
+    },
+    {
+      "name": "group_name",
+      "type": "string",
+      "description": "Group name when the principal is a group, otherwise null"
+    },
+    {
+      "name": "service_principal_name",
+      "type": "string",
+      "description": "Application id when the principal is a service principal, otherwise null"
+    },
+    {
+      "name": "permission",
+      "type": "string",
+      "description": "ADMIN or USER"
+    }
+  ],
+  "cost": {
+    "fan_out": "account",
+    "expensive": false,
+    "notes": "One call per workspace when swept across an account"
+  },
+  "related": [
+    "databricks/provisioning/workspaces-list",
+    "databricks/provisioning/account-infrastructure"
+  ],
+  "template": "SELECT\nprincipal_id,\ndisplay_name,\nuser_name,\ngroup_name,\nservice_principal_name,\npermission\nFROM databricks_account.iam.vw_workspace_assignments\nWHERE account_id = '{{account_id}}'\nAND workspace_id = '{{workspace_id}}';",
+  "notes": "workspace_id is required: without it the call fails with HTTP 404 and RESOURCE_DOES_NOT_EXIST 'Workspace not found' rather than listing every workspace, so enumerate workspaces first with databricks/provisioning/workspaces-list and iterate. Exactly one of user_name, group_name and service_principal_name is populated per row and the other two are null, which is how the principal type is determined - a row carrying service_principal_name is an application identity rather than a human, and those are the ones worth checking for ADMIN. permission is ADMIN or USER at the workspace level; finer-grained object permissions live in the databricks_workspace provider and need workspace-scoped credentials. Prefer these vw_ views to the raw resources: they are embedded in the provider with per-dialect implementations, so they behave identically on the SQLite and PostgreSQL backends.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/databricks/iam/workspace-assignments",
+  "last_verified": "2026-07-31"
+}

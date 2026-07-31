@@ -1,12 +1,12 @@
 ---
 title: Databricks workspaces in an account
-description: Lists all Databricks workspaces in an account with cloud, region and provisioning status.
+description: Lists Databricks workspaces via the provider's vw_workspaces view with status, cloud placement and pricing tier; the account-level inventory entry point.
 verb: select
-status: draft
+status: stable
 providers: [databricks_account]
 services: [provisioning]
-tags: [databricks, workspaces, inventory]
-keywords: [workspace list, databricks account, workspace inventory]
+tags: [databricks, workspaces, inventory, views]
+keywords: [workspace list, databricks account, workspace inventory, provisioning status]
 intent_keywords:
   - list databricks workspaces
   - what workspaces exist in my databricks account
@@ -22,44 +22,89 @@ params:
 outputs:
   - name: workspace_id
     type: integer
-    description: Numeric workspace id
+    description: Numeric workspace id, the key for per-workspace queries
   - name: workspace_name
     type: string
     description: Workspace display name
+  - name: workspace_status
+    type: string
+    description: RUNNING, PROVISIONING, FAILED or CANCELLING
   - name: cloud
     type: string
-    description: aws, azure or gcp
+    description: Cloud provider hosting the workspace
   - name: aws_region
     type: string
     description: Region for AWS-hosted workspaces
   - name: location
     type: string
-    description: Region for GCP-hosted workspaces
-  - name: workspace_status
-    type: string
-    description: RUNNING, PROVISIONING, FAILED, etc.
+    description: Region for Azure or GCP-hosted workspaces
   - name: pricing_tier
     type: string
-    description: Workspace pricing tier
+    description: STANDARD, PREMIUM or ENTERPRISE
 cost:
   fan_out: account
   expensive: false
+related:
+  - databricks/provisioning/account-infrastructure
+  - databricks/iam/workspace-assignments
+last_verified: "2026-07-31"
 ---
 
-Lists every workspace in a Databricks account across clouds, with provisioning
-status and placement. This is the account-level inventory entry point; the
-workspace_id values key all per-workspace follow-ups. Auth is a service
-principal with OAuth client credentials at the account level.
+Lists every workspace in a Databricks account using the provider's built-in
+vw_workspaces view. Prefer the vw_ views over querying the underlying
+resources directly: they are shipped inside the provider with per-dialect
+implementations, so the same query works on the embedded SQLite backend and
+on a PostgreSQL-backed instance without rewriting any JSON extraction.
 
 ## Query
 
 ```sql
-SELECT workspace_id, workspace_name, cloud, aws_region, location, workspace_status, pricing_tier FROM databricks_account.provisioning.workspaces WHERE account_id = '{{account_id}}';
+SELECT
+workspace_id,
+workspace_name,
+workspace_status,
+cloud,
+aws_region,
+location,
+pricing_tier
+FROM databricks_account.provisioning.vw_workspaces
+WHERE account_id = '{{account_id}}';
+```
+
+## Creating a workspace
+
+A workspace needs a credential and a storage configuration to exist first -
+see databricks/provisioning/account-infrastructure for both:
+
+```sql
+INSERT INTO databricks_account.provisioning.workspaces (
+  aws_region,
+  credentials_id,
+  pricing_tier,
+  storage_configuration_id,
+  workspace_name,
+  account_id
+)
+SELECT
+  'us-east-1',
+  '{{credentials_id}}',
+  'PREMIUM',
+  '{{storage_configuration_id}}',
+  'my-workspace',
+  '{{account_id}}';
 ```
 
 ## Notes
 
-The region column differs by cloud: aws_region for AWS workspaces, location
-for GCP, and azure_workspace_info for Azure. Per-workspace resources (clusters,
-jobs, catalogs) live in the separate databricks_workspace provider keyed by
-deployment_name.
+The region column that carries a value depends on the cloud: aws_region is
+populated for AWS-hosted workspaces while location carries it for Azure and
+GCP, and cloud itself is often null on AWS accounts, so treat the presence of
+aws_region as the AWS signal rather than testing cloud. workspace_id is a
+numeric id, not a GUID, and it is the key for every per-workspace query -
+including the account-level assignment views. Creation is asynchronous:
+workspace_status moves through PROVISIONING to RUNNING, so poll this view
+rather than assuming the insert completed the workspace. Per-workspace
+resources such as clusters, jobs and catalogs live in the separate
+databricks_workspace provider, which authenticates against the workspace host
+rather than the account, so an account-level credential alone will not reach
+them.

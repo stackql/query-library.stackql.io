@@ -24,7 +24,7 @@
     "id": "databricks",
     "title": "Databricks",
     "description": "Data lakehouse platform for analytics, data engineering and AI.",
-    "count": 1,
+    "count": 3,
     "logo": "/img/providers/databricks/favicon.ico"
   },
   {
