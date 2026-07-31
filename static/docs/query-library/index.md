@@ -6,7 +6,7 @@
 > (`<id>.json`) consumed by the stackql MCP server's `query_library_search`
 > and `query_library_get` tools.
 
-Build `ql-ea4d2cbf5ec44568` | 47 entries | machine catalogue:
+Build `ql-c06517a27682cd09` | 47 entries | machine catalogue:
 [index.json](https://stackql.io/docs/query-library/index.json) |
 [manifest.json](https://stackql.io/docs/query-library/manifest.json)
 

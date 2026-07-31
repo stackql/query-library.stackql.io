@@ -12,7 +12,7 @@ intent_keywords:
   - find buckets with public access block disabled
   - s3 buckets with public acls or policies
 auth: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-permissions: ["cloudformation:GetResource", "s3:GetBucketPublicAccessBlock", "s3:GetBucketOwnershipControls"]
+permissions: ["s3:GetBucketPublicAccessBlock", "s3:GetBucketOwnershipControls"]
 params:
   - name: region
     type: identifier

@@ -113,5 +113,4 @@ so a projection valid for one form fails against the other. architectures is
 a JSON array - functions declare exactly one architecture today, so element
 0 is the value. runtime is null for container image functions, where
 package_type is Image and the runtime lives in the image itself. memory_size
-determines CPU allocation as well as memory. The awscc list-only variation
-needs cloudformation:ListResources in addition to the Lambda action.
+determines CPU allocation as well as memory.

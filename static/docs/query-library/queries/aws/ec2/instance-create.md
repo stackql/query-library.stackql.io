@@ -12,7 +12,7 @@ intent_keywords:
   - create a new vm in aws
   - provision an ec2 instance
 auth: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-permissions: ["cloudformation:CreateResource", "ec2:RunInstances", "ec2:CreateTags", "ec2:DescribeInstances"]
+permissions: ["ec2:RunInstances", "ec2:CreateTags", "ec2:DescribeInstances"]
 params:
   - name: region
     type: identifier

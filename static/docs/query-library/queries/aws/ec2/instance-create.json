@@ -16,7 +16,6 @@
     "AWS_SECRET_ACCESS_KEY"
   ],
   "permissions": [
-    "cloudformation:CreateResource",
     "ec2:RunInstances",
     "ec2:CreateTags",
     "ec2:DescribeInstances"

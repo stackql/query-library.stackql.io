@@ -85,7 +85,7 @@
     "aws/ec2/regions-enabled"
   ],
   "template": "SELECT\nfunction_name,\nruntime,\njson_extract(architectures, '$[0]') as architecture,\nmemory_size,\ntimeout,\npackage_type,\ncode_size,\nlast_modified,\nrole\nFROM aws.lambda.functions\nWHERE region = '{{region}}';",
-  "notes": "The same resource serves two operations: region alone lists every function with full configuration, while adding function_name routes to GetFunction and returns a different column set (code, configuration, concurrency, tags), so a projection valid for one form fails against the other. architectures is a JSON array - functions declare exactly one architecture today, so element 0 is the value. runtime is null for container image functions, where package_type is Image and the runtime lives in the image itself. memory_size determines CPU allocation as well as memory. The awscc list-only variation needs cloudformation:ListResources in addition to the Lambda action.",
+  "notes": "The same resource serves two operations: region alone lists every function with full configuration, while adding function_name routes to GetFunction and returns a different column set (code, configuration, concurrency, tags), so a projection valid for one form fails against the other. architectures is a JSON array - functions declare exactly one architecture today, so element 0 is the value. runtime is null for container image functions, where package_type is Image and the runtime lives in the image itself. memory_size determines CPU allocation as well as memory.",
   "doc_url": "https://stackql.io/docs/query-library/queries/aws/lambda/functions-list",
   "last_verified": "2026-07-29"
 }

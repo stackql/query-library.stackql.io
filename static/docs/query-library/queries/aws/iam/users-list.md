@@ -12,7 +12,7 @@ intent_keywords:
   - what users exist in the account
   - iam user inventory
 auth: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY]
-permissions: ["cloudformation:ListResources", "iam:ListUsers"]
+permissions: ["iam:ListUsers"]
 params: []
 outputs:
   - name: user_name
@@ -55,8 +55,7 @@ WHERE region = 'us-east-1';
 
 IAM is global: region = 'us-east-1' is endpoint routing, never a filter, and
 applies to every IAM query. The template is the cheap identifier-only path
-via Cloud Control, requiring cloudformation:ListResources plus
-iam:ListUsers; the native variation requires only iam:ListUsers and returns
+via Cloud Control, requiring iam:ListUsers; the native variation requires only iam:ListUsers and returns
 ARN, user id, creation date, password_last_used and path in one call.
 password_last_used is the string null for users who have never signed in
 with a console password. Sibling list-only resources with the same shape

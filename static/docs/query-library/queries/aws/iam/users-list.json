@@ -16,7 +16,6 @@
     "AWS_SECRET_ACCESS_KEY"
   ],
   "permissions": [
-    "cloudformation:ListResources",
     "iam:ListUsers"
   ],
   "params": [],
@@ -32,7 +31,7 @@
     "expensive": false
   },
   "template": "SELECT user_name\nFROM awscc.iam.users_list_only\nWHERE region = 'us-east-1';",
-  "notes": "IAM is global: region = 'us-east-1' is endpoint routing, never a filter, and applies to every IAM query. The template is the cheap identifier-only path via Cloud Control, requiring cloudformation:ListResources plus iam:ListUsers; the native variation requires only iam:ListUsers and returns ARN, user id, creation date, password_last_used and path in one call. password_last_used is the string null for users who have never signed in with a console password. Sibling list-only resources with the same shape cover roles (awscc.iam.roles_list_only) and groups (awscc.iam.groups_list_only).",
+  "notes": "IAM is global: region = 'us-east-1' is endpoint routing, never a filter, and applies to every IAM query. The template is the cheap identifier-only path via Cloud Control, requiring iam:ListUsers; the native variation requires only iam:ListUsers and returns ARN, user id, creation date, password_last_used and path in one call. password_last_used is the string null for users who have never signed in with a console password. Sibling list-only resources with the same shape cover roles (awscc.iam.roles_list_only) and groups (awscc.iam.groups_list_only).",
   "doc_url": "https://stackql.io/docs/query-library/queries/aws/iam/users-list",
   "last_verified": "2026-07-29",
   "author": "Jeffrey Aven",
