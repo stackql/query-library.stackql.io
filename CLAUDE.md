@@ -157,8 +157,10 @@ factory (it assumes a microsite at baseUrl `/` with its own preset), so
 [docusaurus.config.js](docusaurus.config.js) composes the pieces instead:
 `buildNavbar()`/`buildFooter()` for the chrome (logo href overridden to the
 brand home; `selfUrl` tells the shared code that AI Agents > Query Library
-is this site, so it becomes an internal link), `redirectsPlugin` for the
-main-site destinations
+is this site, so it becomes an internal link and its redirect route is not
+registered - that page would build to `docs/query-library.html`, which
+Netlify's pretty URLs would serve in place of the baseUrl root on direct
+hits), `redirectsPlugin` for the main-site destinations
 (one local route under baseUrl per link that client-side-forwards to the
 real page, so links are internal here: no external-link icon, they pass the
 broken-link checker, and they work on localhost and on the raw subdomain)

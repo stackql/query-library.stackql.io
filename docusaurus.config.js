@@ -27,10 +27,17 @@ const shared = require('./.shared-config/index.js');
 
 const baseUrl = '/docs/query-library/';
 
+// selfUrl tells the shared chrome which destination IS this site: its menu
+// entry (AI Agents > Query Library) becomes an internal link to the landing
+// page, and its redirect route is not registered (a page redirecting to its
+// own site, whose built file docs/query-library.html would otherwise shadow
+// the baseUrl root on direct hits via Netlify's pretty URLs). The shared
+// code owns the comparison; nothing here names the label or path.
+const selfUrl = `https://stackql.io${baseUrl}`;
+
 // Full public route paths of the shared redirect stubs: kept out of the
-// sitemap and of structured-data JSON-LD emission below (the shared
-// Redirect component noindexes them).
-const redirectStubRoutes = shared.redirectRoutes(baseUrl);
+// sitemap and of structured-data JSON-LD emission below.
+const redirectStubRoutes = shared.redirectRoutes(baseUrl, {selfUrl});
 
 // The site logo goes to the brand home, not this site's root (the shared
 // default suits a microsite whose root is its own landing page). An
@@ -40,12 +47,6 @@ const logo = {
   href: 'https://stackql.io/',
   target: '_self',
 };
-
-// selfUrl tells the shared chrome which destination IS this site, so its
-// menu entry (AI Agents > Query Library) becomes an internal link to the
-// landing page instead of a redirect route that bounces back here. The
-// shared code owns the comparison; nothing here names the label or path.
-const selfUrl = `https://stackql.io${baseUrl}`;
 
 const navbar = {...shared.buildNavbar({selfUrl}), logo};
 const footer = {...shared.buildFooter({selfUrl}), logo};
@@ -106,9 +107,9 @@ const config = {
     },
   ],
   plugins: [
-    // Local redirect routes for every shared main-site destination (see the
-    // chrome note at the top of this file).
-    shared.redirectsPlugin,
+    // Local redirect routes for every shared main-site destination except
+    // this site itself (see the selfUrl note at the top of this file).
+    [shared.redirectsPlugin, {selfUrl}],
     '@stackql/docusaurus-plugin-structured-data',
     [
       '@stackql/docusaurus-plugin-aeo',
