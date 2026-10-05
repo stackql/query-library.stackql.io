@@ -75,6 +75,21 @@ const config = {
   trailingSlash: false,
   headTags: [
     {
+      // Direct hits on this origin (Netlify deploy previews, the raw
+      // query-library.stackql.io host) arrive WITHOUT the baseUrl prefix:
+      // the HTML the server returns is right (netlify.toml maps the prefixed
+      // asset paths), but the client router only knows routes under
+      // baseUrl, so on hydration it matches nothing and swaps the page for
+      // Not Found - a flash of content, then a 404. Send such a hit to the
+      // prefixed URL before anything renders. Via the stackql.io proxy the
+      // pathname always carries the prefix, so this never fires there. A
+      // server-side redirect cannot do this: the proxy strips the prefix and
+      // needs the origin to keep answering 200 at the root.
+      tagName: 'script',
+      attributes: {},
+      innerHTML: `(function(){var b='${baseUrl.replace(/\/$/, '')}';var p=location.pathname;if(p.indexOf(b+'/')===0)return;location.replace(b+(p===b?'/':p)+location.search+location.hash)})()`,
+    },
+    {
       tagName: 'link',
       attributes: {
         rel: 'preconnect',

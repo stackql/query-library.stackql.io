@@ -39,12 +39,17 @@ Consequences:
 - Every emitted link, asset path and canonical URL carries the
   `/docs/query-library/` prefix, so pages work when proxied.
 - Browsing the raw subdomain or a Netlify deploy preview directly works
-  too: a non-forced 200 rewrite in [netlify.toml](netlify.toml) maps the
-  prefixed asset and page paths the HTML emits back to the origin root (the
-  proxy never sends prefixed paths, so production is unaffected).
-  Canonicalisation is via the `<link rel="canonical">` tags Docusaurus
-  emits, not redirects. The origin must answer 200 to the proxy - never add
-  a blanket 301 to stackql.io here.
+  too, by two cooperating pieces: a non-forced 200 rewrite in
+  [netlify.toml](netlify.toml) maps the prefixed asset and page paths the
+  HTML emits back to the origin root, and an inline head script
+  (`headTags` in docusaurus.config.js) sends a prefix-less pathname to the
+  prefixed URL before render, because the client router only knows routes
+  under baseUrl and would otherwise swap the server-rendered page for Not
+  Found on hydration. The proxy never sends prefixed paths and the browser
+  URL there always carries the prefix, so neither piece fires in
+  production. Canonicalisation is via the `<link rel="canonical">` tags
+  Docusaurus emits, not redirects. The origin must answer 200 to the proxy
+  - never add a server-side redirect from the root here.
 - The committed machine artifacts land in the build at
   `build/docs/query-library/` (static copy) while HTML lands at the build
   root; [netlify.toml](netlify.toml) has non-forced 200 rewrites that surface
