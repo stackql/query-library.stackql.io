@@ -6,7 +6,7 @@
 > (`<id>.json`) consumed by the stackql MCP server's `query_library_search`
 > and `query_library_get` tools.
 
-Build `ql-ea4d2cbf5ec44568` | 47 entries | machine catalogue:
+Build `ql-2e0083ba3d9afd03` | 48 entries | machine catalogue:
 [index.json](https://stackql.io/docs/query-library/index.json) |
 [manifest.json](https://stackql.io/docs/query-library/manifest.json)
 
@@ -62,6 +62,7 @@ Build `ql-ea4d2cbf5ec44568` | 47 entries | machine catalogue:
 
 ## github
 
+- [GitHub repository stargazers](https://stackql.io/docs/query-library/queries/github/activity/repo-stargazers) (select; params: owner, repo): Lists the accounts that have starred a GitHub repository with login, profile URL and account type; the audience snapshot to take before a repository changes visibility or ownership.
 - [GitHub issue creation velocity](https://stackql.io/docs/query-library/queries/github/issues/issue-velocity) (select; draft; params: owner, repo): Sequences a repository's issues by creation date with a cumulative count and the gap since the previous issue; the intake rate and quiet-period view.
 - [GitHub weekly commit activity trend](https://stackql.io/docs/query-library/queries/github/repos/commit-activity-trend) (select; params: owner, repo): Reports the last year of weekly commit counts with a four-week moving average and cumulative total; the project momentum view.
 - [GitHub contributor ranking and concentration](https://stackql.io/docs/query-library/queries/github/repos/contributor-analytics) (select; params: owner, repo): Ranks a repository's contributors by commit count with running totals and share of the whole; the bus-factor and contribution concentration view.

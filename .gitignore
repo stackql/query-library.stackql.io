@@ -37,3 +37,6 @@ vars.ps1
 # Claude Code local settings
 .claude/settings.local.json
 __pycache__/
+
+# vendored shared docusaurus config (cloned at build time by the vendor-config script)
+.shared-config

@@ -31,7 +31,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -224,6 +223,24 @@ def build_index_md(entries, build_id: str) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def prune_stale_outputs(out_dir: Path, keep: set[Path]) -> None:
+    """Delete files under out_dir that this build did not write, then drop the
+    directories that are left empty, deepest first. A directory that cannot
+    be removed (a transient lock, seen on Windows) is left in place: git does
+    not track empty directories, so the committed tree is unaffected. A stale
+    file that cannot be deleted is an error - it would ship a removed entry.
+    """
+    for path in sorted(out_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True):
+        if path.is_file():
+            if path not in keep:
+                path.unlink()
+        elif path.is_dir():
+            try:
+                path.rmdir()  # succeeds only once empty
+            except OSError:
+                pass
+
+
 def main() -> int:
     if validate.main() != 0:
         print("build-artifacts: validation failed, not emitting artifacts", file=sys.stderr)
@@ -235,34 +252,33 @@ def main() -> int:
     build_id = compute_build_id(entries, docs, index_entries)
     manifest = build_manifest(build_id, len(entries))
 
-    if STATIC_OUT_DIR.exists():
-        shutil.rmtree(STATIC_OUT_DIR)
-    (STATIC_OUT_DIR / "queries").mkdir(parents=True)
+    # Write every output first, then remove whatever the previous build left
+    # that this one did not produce. The former rmtree-then-write was fragile
+    # on Windows: a transient handle on any subdirectory (editor file watcher,
+    # antivirus scanning the files just written) aborted the delete half-way
+    # and left the tree partially emptied under the pre-commit hook.
+    written: set[Path] = set()
 
-    (STATIC_OUT_DIR / "index.json").write_text(
+    def emit(path: Path, text: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8", newline="\n")
+        written.add(path)
+
+    emit(
+        STATIC_OUT_DIR / "index.json",
         canonical_json({"build_id": build_id, "entries": index_entries}),
-        encoding="utf-8",
-        newline="\n",
     )
-    (STATIC_OUT_DIR / "manifest.json").write_text(
-        canonical_json(manifest), encoding="utf-8", newline="\n"
-    )
-    (STATIC_OUT_DIR / "index.md").write_text(
-        build_index_md(entries, build_id), encoding="utf-8", newline="\n"
-    )
+    emit(STATIC_OUT_DIR / "manifest.json", canonical_json(manifest))
+    emit(STATIC_OUT_DIR / "index.md", build_index_md(entries, build_id))
     # Site-facing extras: not part of the frozen machine contract and not
     # hashed into build_id (presentation data only).
     providers_summary = build_providers_summary(entries)
-    (STATIC_OUT_DIR / "providers.json").write_text(
-        canonical_json(providers_summary), encoding="utf-8", newline="\n"
-    )
+    emit(STATIC_OUT_DIR / "providers.json", canonical_json(providers_summary))
     write_provider_stubs(providers_summary)
     for entry, doc in zip(entries, docs):
-        out_json = STATIC_OUT_DIR / "queries" / f"{entry.id}.json"
-        out_md = STATIC_OUT_DIR / "queries" / f"{entry.id}.md"
-        out_json.parent.mkdir(parents=True, exist_ok=True)
-        out_json.write_text(canonical_json(doc), encoding="utf-8", newline="\n")
-        out_md.write_text(entry.raw, encoding="utf-8", newline="\n")
+        emit(STATIC_OUT_DIR / "queries" / f"{entry.id}.json", canonical_json(doc))
+        emit(STATIC_OUT_DIR / "queries" / f"{entry.id}.md", entry.raw)
+    prune_stale_outputs(STATIC_OUT_DIR, written)
 
     print(
         f"built {len(entries)} entries -> {STATIC_OUT_DIR.relative_to(REPO_ROOT)} "
