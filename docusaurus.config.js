@@ -14,61 +14,93 @@ const nightOwlCodeTheme = themes.nightOwl;
 // library pages read as one site. Every main-site destination has a stub
 // page under src/pages/ (rendering src/components/ExternalRedirect) so the
 // links are internal routes here - no external-link icon, and the
-// broken-link checker validates them. The `to` values below are
-// baseUrl-relative; keep them in lockstep with the stub files and with the
-// main repo's navbar/footer config.
+// broken-link checker validates them. Stub paths equal the main site's own
+// canonical paths (the docs tree there is served at the site root, so
+// e.g. /mcp not /docs/mcp). The one exception is the docs root itself,
+// stackql.io/: '/' here is the library landing, so that destination is the
+// /docs stub, which forwards straight to the root. The `to` values below
+// are baseUrl-relative; keep them in lockstep with the stub files and with
+// the main repo's chrome config (docusaurus.config.js there: navbar.items,
+// footerStackQLItems, footerMoreItems, blogSections, and the `featured`
+// entries of src/configs/providers.json for the Providers dropdown).
 const mainSitePaths = [
-  '/install',
-  '/stackql-deploy',
-  '/contact-us',
-  '/stackqldocs',
-  '/blog',
-  '/tutorials',
   '/docs',
-  '/docs/command-line-usage/mcp',
-  '/docs/mcp',
-  '/docs/mcp/embedded',
+  '/installing-stackql',
+  '/contact-us',
+  '/stackql-deploy',
+  '/command-line-usage/mcp',
+  '/mcp',
+  '/mcp/embedded',
+  '/quick-starts',
+  '/blog/product',
+  '/blog/providers',
+  '/blog/tutorials',
   '/providers',
   '/providers/aws',
   '/providers/azure',
   '/providers/google',
-  '/providers/databricks',
+  '/providers/cloudflare',
+  '/providers/databricks-account',
   '/providers/snowflake',
   '/providers/confluent',
   '/providers/okta',
-  '/providers/github',
   '/providers/openai',
-  '/providers/cloudflare',
+  '/providers/github',
 ];
 // Full public route paths of the stubs (baseUrl + path): kept out of the
 // sitemap and of structured-data JSON-LD emission below.
 const redirectStubRoutes = mainSitePaths.map((p) => `/docs/query-library${p}`);
 
+// The main site's Providers dropdown lists the `featured` entries of its
+// provider catalog in catalog order, labelled by shortName. Databricks'
+// canonical slug there is databricks-account (the family-level
+// /providers/databricks route was retired and now 301s to /registry).
 const providerDropDownListItems = [
   {label: 'AWS', to: '/providers/aws'},
   {label: 'Azure', to: '/providers/azure'},
   {label: 'Google', to: '/providers/google'},
-  {label: 'Databricks', to: '/providers/databricks'},
+  {label: 'Cloudflare', to: '/providers/cloudflare'},
+  {label: 'Databricks', to: '/providers/databricks-account'},
   {label: 'Snowflake', to: '/providers/snowflake'},
   {label: 'Confluent', to: '/providers/confluent'},
   {label: 'Okta', to: '/providers/okta'},
-  {label: 'GitHub', to: '/providers/github'},
   {label: 'OpenAI', to: '/providers/openai'},
-  {label: 'Cloudflare', to: '/providers/cloudflare'},
+  {label: 'GitHub', to: '/providers/github'},
   {label: '... More', to: '/providers'},
 ];
 
+// Blog sections: one @docusaurus/plugin-content-blog instance each on the
+// main site, at /blog/<id>. As there, the header entries carry a bullhorn
+// on the two announcement sections, the footer entries are plain, and the
+// /blog landing page is deliberately not linked from the chrome.
+const blogSections = [
+  {id: 'product', label: 'Product Announcements', navLabel: '📣 Product Announcements'},
+  {id: 'providers', label: 'Provider Announcements', navLabel: '📣 Provider Announcements'},
+  {id: 'tutorials', label: 'Tutorials'},
+];
+
+const blogSectionNavItems = blogSections.map(({id, label, navLabel}) => ({
+  label: navLabel || label,
+  to: `/blog/${id}`,
+}));
+
+const blogSectionFooterItems = blogSections.map(({id, label}) => ({
+  label,
+  to: `/blog/${id}`,
+}));
+
 const footerStackQLItems = [
-  {label: 'Documentation', to: '/stackqldocs'},
-  {label: 'Install', to: '/install'},
+  // The main site links its docs root, stackql.io/ - see the /docs stub note above.
+  {label: 'Documentation', to: '/docs'},
+  {label: 'Install', to: '/installing-stackql'},
   {label: 'Contact us', to: '/contact-us'},
 ];
 
 const footerMoreItems = [
   {label: 'Providers', to: '/providers'},
   {label: 'stackql-deploy', to: '/stackql-deploy'},
-  {label: 'Blog', to: '/blog'},
-  {label: 'Tutorials', to: '/tutorials'},
+  ...blogSectionFooterItems,
+  {label: 'Quick Starts', to: '/quick-starts'},
 ];
 
 /** @type {import('@docusaurus/types').Config} */
@@ -301,7 +333,7 @@ const config = {
         },
         items: [
           {
-            to: '/install',
+            to: '/installing-stackql',
             label: 'Install',
             position: 'left',
           },
@@ -311,15 +343,15 @@ const config = {
             position: 'left',
             items: [
               {
-                to: '/docs/command-line-usage/mcp',
+                to: '/command-line-usage/mcp',
                 label: 'MCP Server',
               },
               {
-                to: '/docs/mcp',
+                to: '/mcp',
                 label: 'MCP Tools',
               },
               {
-                to: '/docs/mcp/embedded',
+                to: '/mcp/embedded',
                 label: 'Embedded MCP',
               },
               {
@@ -346,13 +378,10 @@ const config = {
             label: 'More',
             position: 'left',
             items: [
+              ...blogSectionNavItems,
               {
-                to: '/blog',
-                label: 'Blog',
-              },
-              {
-                to: '/tutorials',
-                label: 'Tutorials',
+                to: '/quick-starts',
+                label: 'Quick Starts',
               },
             ],
           },

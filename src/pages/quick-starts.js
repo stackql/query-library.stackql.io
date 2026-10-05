@@ -1,9 +1,9 @@
-﻿// GENERATED-STYLE stub: makes the main-site path /providers/databricks an internal
+// GENERATED-STYLE stub: makes the main-site path /quick-starts an internal
 // route on this site (no external-link icon in nav/footer) and forwards to
 // stackql.io. See src/components/ExternalRedirect.
 import React from 'react';
 import ExternalRedirect from '@site/src/components/ExternalRedirect';
 
 export default function RedirectPage() {
-  return <ExternalRedirect to="https://stackql.io/providers/databricks" />;
+  return <ExternalRedirect to="https://stackql.io/quick-starts" />;
 }

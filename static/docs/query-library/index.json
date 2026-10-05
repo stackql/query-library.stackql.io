@@ -1,5 +1,5 @@
 {
-  "build_id": "ql-ea4d2cbf5ec44568",
+  "build_id": "ql-2e0083ba3d9afd03",
   "entries": [
     {
       "id": "aws/cloud_control/resource-request-by-token",
@@ -1351,6 +1351,43 @@
       "status": "stable",
       "required_params": [
         "account_id"
+      ]
+    },
+    {
+      "id": "github/activity/repo-stargazers",
+      "title": "GitHub repository stargazers",
+      "description": "Lists the accounts that have starred a GitHub repository with login, profile URL and account type; the audience snapshot to take before a repository changes visibility or ownership.",
+      "providers": [
+        "github"
+      ],
+      "services": [
+        "activity"
+      ],
+      "tags": [
+        "github",
+        "activity",
+        "community",
+        "stars"
+      ],
+      "keywords": [
+        "stargazers",
+        "stars",
+        "who starred",
+        "star list",
+        "starred by",
+        "repository audience"
+      ],
+      "intent_keywords": [
+        "who starred this github repo",
+        "list stargazers for a repository",
+        "which users have starred my repo"
+      ],
+      "mutation": false,
+      "verb": "select",
+      "status": "stable",
+      "required_params": [
+        "owner",
+        "repo"
       ]
     },
     {

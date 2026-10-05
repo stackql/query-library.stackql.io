@@ -144,10 +144,15 @@ external `href` links - each has a redirect stub page under `src/pages/`
 mounting [src/components/ExternalRedirect](src/components/ExternalRedirect/index.jsx),
 which gives the link a real internal route (no external-link icon, passes
 the broken-link checker, works on localhost and on the raw subdomain) and
-instantly forwards to the real page on stackql.io. The stub route list, the
-navbar/footer `to` values (`mainSitePaths` in docusaurus.config.js) and the
-stub files must stay in lockstep with each other and with the main repo's
-navbar/footer. Stub routes are noindexed, excluded from the sitemap and
+instantly forwards to the real page on stackql.io. Stub paths equal the main
+site's canonical paths (its docs are served at the site root, so `/mcp`, not
+`/docs/mcp`); the one exception is the main docs root, `stackql.io/`, which
+is the `/docs` stub here because `/` is the library landing. The stub route
+list, the navbar/footer `to` values (`mainSitePaths` in docusaurus.config.js)
+and the stub files must stay in lockstep with each other and with the main
+repo's navbar/footer (its `navbar.items`, `footerStackQLItems`,
+`footerMoreItems`, `blogSections` and the `featured` entries of its
+`src/configs/providers.json`, which drive the Providers dropdown). Stub routes are noindexed, excluded from the sitemap and
 from structured-data JSON-LD. The footer is the swizzled main-site footer
 (`src/theme/Footer`, needs `@iconify/react`, `@mui/material`, `clsx`);
 `src/css/global.css` is the full main-site stylesheet for visual parity.

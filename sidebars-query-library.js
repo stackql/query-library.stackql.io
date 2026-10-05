@@ -30,7 +30,7 @@ const sidebars = {
     // Escape hatch back to the main stackql.io docs. '/docs' resolves under
     // baseUrl to the redirect stub at src/pages/docs/index.js, so the link
     // renders as internal (no external-link icon) and forwards to
-    // stackql.io/docs.
+    // stackql.io/ (the main site serves its docs at the site root).
     {
       type: 'link',
       href: '/docs',
