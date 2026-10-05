@@ -151,14 +151,17 @@ this site's next build. This site cannot use the shared `createConfig`
 factory (it assumes a microsite at baseUrl `/` with its own preset), so
 [docusaurus.config.js](docusaurus.config.js) composes the pieces instead:
 `buildNavbar()`/`buildFooter()` for the chrome (logo href overridden to the
-brand home, and AI Agents > Query Library pointed at `/` because that
-destination is this site), `redirectsPlugin` for the main-site destinations
+brand home; `selfUrl` tells the shared code that AI Agents > Query Library
+is this site, so it becomes an internal link), `redirectsPlugin` for the
+main-site destinations
 (one local route under baseUrl per link that client-side-forwards to the
 real page, so links are internal here: no external-link icon, they pass the
 broken-link checker, and they work on localhost and on the raw subdomain)
 and `redirectRoutes(baseUrl)` to keep those stub routes out of the sitemap
-and of structured-data JSON-LD (the shared Redirect component noindexes
-them). There are no `src/pages/` stubs; menu changes belong in the shared
+and of structured-data JSON-LD. The shared Redirect pages carry a canonical
+to their target and a zero-second meta refresh and are deliberately not
+noindexed (noindex plus canonical is a contradictory signal, and a redirect
+is never indexed). There are no `src/pages/` stubs; menu changes belong in the shared
 repo, whose README documents the composition contract ("Composing instead
 of createConfig") and whose menus must be kept in step with the main site's
 navbar/footer. The footer is the swizzled main-site footer

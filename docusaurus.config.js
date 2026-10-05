@@ -41,28 +41,14 @@ const logo = {
   target: '_self',
 };
 
-// Shared navbar, with the one destination that IS this site - AI Agents >
-// Query Library - pointing at the library landing instead of its shared
-// redirect route.
-const navbar = (() => {
-  const nav = shared.buildNavbar();
-  return {
-    ...nav,
-    logo,
-    items: nav.items.map((item) =>
-      item.type === 'dropdown' && item.label === 'AI Agents'
-        ? {
-            ...item,
-            items: item.items.map((child) =>
-              child.label === 'Query Library' ? {...child, to: '/'} : child,
-            ),
-          }
-        : item,
-    ),
-  };
-})();
+// selfUrl tells the shared chrome which destination IS this site, so its
+// menu entry (AI Agents > Query Library) becomes an internal link to the
+// landing page instead of a redirect route that bounces back here. The
+// shared code owns the comparison; nothing here names the label or path.
+const selfUrl = `https://stackql.io${baseUrl}`;
 
-const footer = {...shared.buildFooter(), logo};
+const navbar = {...shared.buildNavbar({selfUrl}), logo};
+const footer = {...shared.buildFooter({selfUrl}), logo};
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
