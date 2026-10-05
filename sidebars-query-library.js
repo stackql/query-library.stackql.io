@@ -27,13 +27,13 @@ function labelFor(id) {
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   queryLibrarySidebar: [
-    // Escape hatch back to the main stackql.io docs. '/docs' resolves under
-    // baseUrl to the redirect stub at src/pages/docs/index.js, so the link
-    // renders as internal (no external-link icon) and forwards to
-    // stackql.io/ (the main site serves its docs at the site root).
+    // Escape hatch back to the main stackql.io docs. '/stackqldocs' is the
+    // shared chrome's redirect route for the main docs root (registered
+    // under baseUrl by the vendored redirects plugin), so the link renders
+    // as internal (no external-link icon) and forwards to stackql.io/.
     {
       type: 'link',
-      href: '/docs',
+      href: '/stackqldocs',
       label: 'Back to docs',
       className: 'ql-sidebar-back-link',
     },

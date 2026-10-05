@@ -38,10 +38,13 @@ Consequences:
 
 - Every emitted link, asset path and canonical URL carries the
   `/docs/query-library/` prefix, so pages work when proxied.
-- Browsing the raw subdomain directly shows broken asset paths - expected and
-  accepted; canonicalisation is via the `<link rel="canonical">` tags
-  Docusaurus emits, not redirects. The origin must answer 200 to the proxy -
-  never add a blanket 301 to stackql.io here.
+- Browsing the raw subdomain or a Netlify deploy preview directly works
+  too: a non-forced 200 rewrite in [netlify.toml](netlify.toml) maps the
+  prefixed asset and page paths the HTML emits back to the origin root (the
+  proxy never sends prefixed paths, so production is unaffected).
+  Canonicalisation is via the `<link rel="canonical">` tags Docusaurus
+  emits, not redirects. The origin must answer 200 to the proxy - never add
+  a blanket 301 to stackql.io here.
 - The committed machine artifacts land in the build at
   `build/docs/query-library/` (static copy) while HTML lands at the build
   root; [netlify.toml](netlify.toml) has non-forced 200 rewrites that surface
@@ -137,23 +140,28 @@ easy to get wrong:
 
 ## Site chrome (must look identical to stackql.io)
 
-The navbar and footer mirror the main site's config so the proxied pages
-read as one site. Main-site destinations (Install, Providers, Blog, the
-docs dropdown items, footer links, the sidebar "Back to docs" link) are NOT
-external `href` links - each has a redirect stub page under `src/pages/`
-mounting [src/components/ExternalRedirect](src/components/ExternalRedirect/index.jsx),
-which gives the link a real internal route (no external-link icon, passes
-the broken-link checker, works on localhost and on the raw subdomain) and
-instantly forwards to the real page on stackql.io. Stub paths equal the main
-site's canonical paths (its docs are served at the site root, so `/mcp`, not
-`/docs/mcp`); the one exception is the main docs root, `stackql.io/`, which
-is the `/docs` stub here because `/` is the library landing. The stub route
-list, the navbar/footer `to` values (`mainSitePaths` in docusaurus.config.js)
-and the stub files must stay in lockstep with each other and with the main
-repo's navbar/footer (its `navbar.items`, `footerStackQLItems`,
-`footerMoreItems`, `blogSections` and the `featured` entries of its
-`src/configs/providers.json`, which drive the Providers dropdown). Stub routes are noindexed, excluded from the sitemap and
-from structured-data JSON-LD. The footer is the swizzled main-site footer
+The navbar, footer and every cross-site link come from the shared StackQL
+chrome repo, `stackql/docusaurus-config` (local checkout
+`../docusaurus-config`), which also drives the provider microsites. The
+`vendor-config` script in package.json shallow-clones its `main` into the
+gitignored `.shared-config/` before every `yarn start`/`yarn build` (Yarn 1
+runs the pre-scripts, so the Netlify build is covered). A failed clone fails
+the build by design, and `main` is unpinned, so a shared change goes live on
+this site's next build. This site cannot use the shared `createConfig`
+factory (it assumes a microsite at baseUrl `/` with its own preset), so
+[docusaurus.config.js](docusaurus.config.js) composes the pieces instead:
+`buildNavbar()`/`buildFooter()` for the chrome (logo href overridden to the
+brand home, and AI Agents > Query Library pointed at `/` because that
+destination is this site), `redirectsPlugin` for the main-site destinations
+(one local route under baseUrl per link that client-side-forwards to the
+real page, so links are internal here: no external-link icon, they pass the
+broken-link checker, and they work on localhost and on the raw subdomain)
+and `redirectRoutes(baseUrl)` to keep those stub routes out of the sitemap
+and of structured-data JSON-LD (the shared Redirect component noindexes
+them). There are no `src/pages/` stubs; menu changes belong in the shared
+repo, whose README documents the composition contract ("Composing instead
+of createConfig") and whose menus must be kept in step with the main site's
+navbar/footer. The footer is the swizzled main-site footer
 (`src/theme/Footer`, needs `@iconify/react`, `@mui/material`, `clsx`);
 `src/css/global.css` is the full main-site stylesheet for visual parity.
 DocSearch is enabled only when the `ALGOLIA_*` env vars are set (shared

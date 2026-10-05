@@ -10,98 +10,59 @@ const {themes} = require('prism-react-renderer');
 const darkCodeTheme = themes.dracula;
 const nightOwlCodeTheme = themes.nightOwl;
 
-// The navbar and footer mirror the main stackql.io site so the proxied
-// library pages read as one site. Every main-site destination has a stub
-// page under src/pages/ (rendering src/components/ExternalRedirect) so the
-// links are internal routes here - no external-link icon, and the
-// broken-link checker validates them. Stub paths equal the main site's own
-// canonical paths (the docs tree there is served at the site root, so
-// e.g. /mcp not /docs/mcp). The one exception is the docs root itself,
-// stackql.io/: '/' here is the library landing, so that destination is the
-// /docs stub, which forwards straight to the root. The `to` values below
-// are baseUrl-relative; keep them in lockstep with the stub files and with
-// the main repo's chrome config (docusaurus.config.js there: navbar.items,
-// footerStackQLItems, footerMoreItems, blogSections, and the `featured`
-// entries of src/configs/providers.json for the Providers dropdown).
-const mainSitePaths = [
-  '/docs',
-  '/installing-stackql',
-  '/contact-us',
-  '/stackql-deploy',
-  '/command-line-usage/mcp',
-  '/mcp',
-  '/mcp/embedded',
-  '/quick-starts',
-  '/blog/product',
-  '/blog/providers',
-  '/blog/tutorials',
-  '/providers',
-  '/providers/aws',
-  '/providers/azure',
-  '/providers/google',
-  '/providers/cloudflare',
-  '/providers/databricks-account',
-  '/providers/snowflake',
-  '/providers/confluent',
-  '/providers/okta',
-  '/providers/openai',
-  '/providers/github',
-];
-// Full public route paths of the stubs (baseUrl + path): kept out of the
-// sitemap and of structured-data JSON-LD emission below.
-const redirectStubRoutes = mainSitePaths.map((p) => `/docs/query-library${p}`);
+// The navbar, footer and every cross-site link come from the shared StackQL
+// chrome (github.com/stackql/docusaurus-config), vendored into the
+// gitignored .shared-config/ folder by the `vendor-config` script before
+// every start and build - the same wiring the provider microsites use. One
+// repo defines the header, footer and menus for every StackQL property, so
+// the proxied library pages read as one site with stackql.io. This site
+// cannot use the shared createConfig factory (it assumes a microsite at
+// baseUrl '/' with its own preset), so the pieces are composed here: see
+// "Composing instead of createConfig" in the shared README. The shared
+// redirects plugin registers a local route under baseUrl for each main-site
+// destination (so the links are internal here - no external-link icon, and
+// the broken-link checker validates them) that client-side-forwards to the
+// real page.
+const shared = require('./.shared-config/index.js');
 
-// The main site's Providers dropdown lists the `featured` entries of its
-// provider catalog in catalog order, labelled by shortName. Databricks'
-// canonical slug there is databricks-account (the family-level
-// /providers/databricks route was retired and now 301s to /registry).
-const providerDropDownListItems = [
-  {label: 'AWS', to: '/providers/aws'},
-  {label: 'Azure', to: '/providers/azure'},
-  {label: 'Google', to: '/providers/google'},
-  {label: 'Cloudflare', to: '/providers/cloudflare'},
-  {label: 'Databricks', to: '/providers/databricks-account'},
-  {label: 'Snowflake', to: '/providers/snowflake'},
-  {label: 'Confluent', to: '/providers/confluent'},
-  {label: 'Okta', to: '/providers/okta'},
-  {label: 'OpenAI', to: '/providers/openai'},
-  {label: 'GitHub', to: '/providers/github'},
-  {label: '... More', to: '/providers'},
-];
+const baseUrl = '/docs/query-library/';
 
-// Blog sections: one @docusaurus/plugin-content-blog instance each on the
-// main site, at /blog/<id>. As there, the header entries carry a bullhorn
-// on the two announcement sections, the footer entries are plain, and the
-// /blog landing page is deliberately not linked from the chrome.
-const blogSections = [
-  {id: 'product', label: 'Product Announcements', navLabel: '📣 Product Announcements'},
-  {id: 'providers', label: 'Provider Announcements', navLabel: '📣 Provider Announcements'},
-  {id: 'tutorials', label: 'Tutorials'},
-];
+// Full public route paths of the shared redirect stubs: kept out of the
+// sitemap and of structured-data JSON-LD emission below (the shared
+// Redirect component noindexes them).
+const redirectStubRoutes = shared.redirectRoutes(baseUrl);
 
-const blogSectionNavItems = blogSections.map(({id, label, navLabel}) => ({
-  label: navLabel || label,
-  to: `/blog/${id}`,
-}));
+// The site logo goes to the brand home, not this site's root (the shared
+// default suits a microsite whose root is its own landing page). An
+// external href renders without an icon; target keeps it in the same tab.
+const logo = {
+  ...shared.buildNavbar().logo,
+  href: 'https://stackql.io/',
+  target: '_self',
+};
 
-const blogSectionFooterItems = blogSections.map(({id, label}) => ({
-  label,
-  to: `/blog/${id}`,
-}));
+// Shared navbar, with the one destination that IS this site - AI Agents >
+// Query Library - pointing at the library landing instead of its shared
+// redirect route.
+const navbar = (() => {
+  const nav = shared.buildNavbar();
+  return {
+    ...nav,
+    logo,
+    items: nav.items.map((item) =>
+      item.type === 'dropdown' && item.label === 'AI Agents'
+        ? {
+            ...item,
+            items: item.items.map((child) =>
+              child.label === 'Query Library' ? {...child, to: '/'} : child,
+            ),
+          }
+        : item,
+    ),
+  };
+})();
 
-const footerStackQLItems = [
-  // The main site links its docs root, stackql.io/ - see the /docs stub note above.
-  {label: 'Documentation', to: '/docs'},
-  {label: 'Install', to: '/installing-stackql'},
-  {label: 'Contact us', to: '/contact-us'},
-];
-
-const footerMoreItems = [
-  {label: 'Providers', to: '/providers'},
-  {label: 'stackql-deploy', to: '/stackql-deploy'},
-  ...blogSectionFooterItems,
-  {label: 'Quick Starts', to: '/quick-starts'},
-];
+const footer = {...shared.buildFooter(), logo};
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -118,7 +79,7 @@ const config = {
   // paths - expected; canonical tags point at stackql.io. These two values
   // and the main repo's redirect must agree forever.
   url: 'https://stackql.io',
-  baseUrl: '/docs/query-library/',
+  baseUrl,
 
   onBrokenLinks: 'throw',
   favicon: 'favicon.ico',
@@ -144,6 +105,9 @@ const config = {
     },
   ],
   plugins: [
+    // Local redirect routes for every shared main-site destination (see the
+    // chrome note at the top of this file).
+    shared.redirectsPlugin,
     '@stackql/docusaurus-plugin-structured-data',
     [
       '@stackql/docusaurus-plugin-aeo',
@@ -202,8 +166,9 @@ const config = {
       ({
         docs: false,
         blog: false,
-        // src/pages holds only the redirect stubs for main-site nav targets.
-        pages: {},
+        // No src/pages: the main-site redirect stubs are routes registered
+        // by the shared redirects plugin.
+        pages: false,
         sitemap: {
           changefreq: 'weekly',
           priority: 0.5,
@@ -321,99 +286,8 @@ const config = {
           hideable: true,
         },
       },
-      navbar: {
-        logo: {
-          alt: 'StackQL',
-          // Same behavior as the main site's logo (-> home). External href
-          // renders without an icon; target keeps it in the same tab.
-          href: 'https://stackql.io/',
-          target: '_self',
-          src: 'img/logo-original.svg',
-          srcDark: 'img/logo-white.svg',
-        },
-        items: [
-          {
-            to: '/installing-stackql',
-            label: 'Install',
-            position: 'left',
-          },
-          {
-            type: 'dropdown',
-            label: 'AI Agents',
-            position: 'left',
-            items: [
-              {
-                to: '/command-line-usage/mcp',
-                label: 'MCP Server',
-              },
-              {
-                to: '/mcp',
-                label: 'MCP Tools',
-              },
-              {
-                to: '/mcp/embedded',
-                label: 'Embedded MCP',
-              },
-              {
-                // The one destination that IS this site: the library landing.
-                to: '/',
-                label: 'Query Library',
-              },
-            ],
-          },
-          {
-            to: '/stackql-deploy',
-            label: 'stackql-deploy',
-            position: 'left',
-          },
-          {
-            to: '/providers',
-            type: 'dropdown',
-            label: 'Providers',
-            position: 'left',
-            items: providerDropDownListItems,
-          },
-          {
-            type: 'dropdown',
-            label: 'More',
-            position: 'left',
-            items: [
-              ...blogSectionNavItems,
-              {
-                to: '/quick-starts',
-                label: 'Quick Starts',
-              },
-            ],
-          },
-          {
-            href: 'https://github.com/stackql/stackql',
-            position: 'right',
-            className: 'header-github-link',
-            'aria-label': 'GitHub repository',
-          },
-        ],
-      },
-      footer: {
-        style: 'dark',
-        logo: {
-          alt: 'StackQL',
-          href: 'https://stackql.io/',
-          target: '_self',
-          src: 'img/logo-original.svg',
-          srcDark: 'img/logo-white.svg',
-        },
-        links: [
-          {
-            title: 'StackQL',
-            items: footerStackQLItems,
-          },
-          {
-            title: 'More',
-            items: footerMoreItems,
-          },
-        ],
-        copyright: `© ${new Date().getFullYear()} StackQL Studios ABN 65 656 147 054`,
-      },
+      navbar,
+      footer,
       colorMode: {
         respectPrefersColorScheme: true,
       },

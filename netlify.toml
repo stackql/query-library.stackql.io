@@ -36,6 +36,21 @@
 [build.environment]
   PYTHON_VERSION = "3.12"
 
+# --- Direct hits on this origin (deploy previews, the raw subdomain) ---
+# Proxied requests arrive with the /docs/query-library prefix already
+# stripped, but a browser on a deploy preview or on query-library.stackql.io
+# itself follows the emitted links and asset paths, which all carry the
+# prefix (baseUrl). Map them back to the root so previews render styled and
+# navigable. Not forced: the committed artifact tree really exists at
+# build/docs/query-library/ (index.json, manifest.json, queries/*.json|md)
+# and those real files win, exactly as they do for the proxied path. The
+# proxy never sends a prefixed path to this origin, so this rule has no
+# effect on production traffic.
+[[redirects]]
+  from = "/docs/query-library/*"
+  to = "/:splat"
+  status = 200
+
 # --- Contract artifact rewrites (machine catalogue at the origin root) ---
 # Public URLs (via the proxy): stackql.io/docs/query-library/{manifest.json,
 # index.json, index.md, providers.json, queries/<id>.{json,md}}.
